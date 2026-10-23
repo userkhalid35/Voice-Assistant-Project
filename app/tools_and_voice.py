@@ -26,16 +26,34 @@ load_dotenv()
 
 AUDIO_RAM_CACHE: Dict[str, Tuple[str, str]] = {}
 
+DEV_DIGIT_MAP = str.maketrans("०१२३४५६७८९", "0123456789")
+
 WORD_TO_DIGIT = {
-    "zero": "0", "oh": "0", "o": "0",
-    "one": "1", "won": "1",
-    "two": "2", "to": "2", "too": "2",
-    "three": "3", "four": "4", "five": "5",
-    "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    "zero": "0", "oh": "0", "o": "0", "shunya": "0", "शून्य": "0",
+    "one": "1", "won": "1", "ek": "1", "एक": "1",
+    "two": "2", "to": "2", "too": "2", "do": "2", "दो": "2",
+    "three": "3", "teen": "3", "तीन": "3",
+    "four": "4", "chaar": "4", "char": "4", "चार": "4",
+    "five": "5", "paanch": "5", "panch": "5", "पांच": "5", "पाँच": "5",
+    "six": "6", "chhe": "6", "che": "6", "छह": "6", "छः": "6",
+    "seven": "7", "saat": "7", "सात": "7",
+    "eight": "8", "aath": "8", "आठ": "8",
+    "nine": "9", "nau": "9", "नौ": "9",
 }
 
 def extract_and_normalize_order_id(text: str) -> Optional[str]:
-    cleaned = text.lower()
+    # 1. Convert Devanagari numerals (e.g. १०१ -> 101)
+    cleaned = text.translate(DEV_DIGIT_MAP).lower()
+
+    # 2. Convert Devanagari keywords for Order / ORD
+    cleaned = re.sub(r"\b(ओआरडी|ओ\s*आर\s*डी)\b", "ord", cleaned)
+    cleaned = re.sub(r"\b(आर्डर|ऑर्डर)\b", "order", cleaned)
+
+    # 3. Convert Hindi compound numbers like 'ek sau ek' -> '101'
+    cleaned = re.sub(r"\b(?:एक\s*सौ\s*एक|ek\s*sau\s*ek)\b", "101", cleaned)
+    cleaned = re.sub(r"\b(?:एक\s*सौ\s*दो|ek\s*sau\s*do)\b", "102", cleaned)
+    cleaned = re.sub(r"\b(?:एक\s*सौ\s*तीन|ek\s*sau\s*teen)\b", "103", cleaned)
+
     for word, digit in WORD_TO_DIGIT.items():
         cleaned = re.sub(rf"\b{word}\b", digit, cleaned)
 
@@ -46,11 +64,11 @@ def extract_and_normalize_order_id(text: str) -> Optional[str]:
     if explicit:
         return f"ORD-{explicit.group(1)}"
 
-    contextual = re.search(r"\b(?:order|id|number|status|cancel|return|track)\D*(\d{3})\b", cleaned)
+    contextual = re.search(r"\b(?:order|id|number|status|cancel|return|track|ord)\D*(\d{3})\b", cleaned)
     if contextual:
         return f"ORD-{contextual.group(1)}"
 
-    standalone = re.search(r"\b(10[1-9])\b", cleaned)
+    standalone = re.search(r"\b(10[1-9]|999)\b", cleaned)
     if standalone:
         return f"ORD-{standalone.group(1)}"
 
@@ -117,7 +135,7 @@ def execute_fast_tool_router(user_text: str) -> Tuple[Optional[str], Optional[Di
     if not order_id:
         return None, None
 
-    if any(k in lower for k in ["cancel", "radd", "hatana", "dont want", "don't want"]):
+    if any(k in lower for k in ["cancel", "radd", "hatana", "dont want", "don't want", "कैंसिल", "रद्द", "हटाना", "नहीं चाहिए"]):
         return f"cancel_order('{order_id}')", cancel_order(order_id)
 
     return f"get_order_details('{order_id}')", get_order_details(order_id)
@@ -168,7 +186,7 @@ def deterministic_fallback_brain(
                     else f"I'm sorry, order {oid} is currently '{status}', and cancellations are only possible while an order is Processing. You may refuse the package at your doorstep."
                 )
 
-        if any(w in lower for w in ["return", "refund", "wapas", "replace", "exchange"]):
+        if any(w in lower for w in ["return", "refund", "wapas", "replace", "exchange", "वापस", "रिटर्न"]):
             if oid == "ORD-102" or (order.get("days_since_delivery") and order["days_since_delivery"] > 7):
                 return (
                     f"Aapka order {oid} ({prod}) 14 din pehle deliver hua tha. Hamari policy ke mutabik returns sirf delivery ke 7 din ke andar unopened products par hi valid hain, isliye yeh return nahi ho payega."
@@ -196,14 +214,14 @@ def deterministic_fallback_brain(
             )
 
     # Policy questions without a specific order ID
-    if any(w in lower for w in ["return", "refund", "opened", "khola", "20 days", "14 days", "damage", "defective"]):
-        if any(w in lower for w in ["open", "used", "khola", "20", "14", "10"]):
+    if any(w in lower for w in ["return", "refund", "opened", "khola", "20 days", "14 days", "damage", "defective", "वापस", "रिटर्न", "खोला"]):
+        if any(w in lower for w in ["open", "used", "khola", "20", "14", "10", "खोला", "इस्तेमाल"]):
             return (
                 "Maaf kijiyega, Aura Skincare ki policy ke mutabik hum sirf delivery ke 7 din ke andar unopened aur unused products hi return le sakte hain. Opened ya 7 din se purane products return nahi ho sakte."
                 if is_hi
                 else "I'm sorry, Aura Skincare only accepts returns within 7 days of delivery for unopened, unused products in their original packaging. Opened items or orders past 7 days cannot be returned."
             )
-        if any(w in lower for w in ["damage", "broken", "leak", "defective", "kharab"]):
+        if any(w in lower for w in ["damage", "broken", "leak", "defective", "kharab", "खराब", "टूटा"]):
             return (
                 "Agar aapko damaged ya defective product mila hai, toh please delivery ke 48 hours ke andar photos ke saath report karein taaki hum turant replacement bhej sakein."
                 if is_hi
@@ -215,25 +233,51 @@ def deterministic_fallback_brain(
             else "We accept returns within 7 days of delivery for unopened and unused products in original packaging. Damaged products must be reported within 48 hours with photos for a replacement."
         )
 
-    if any(w in lower for w in ["ship", "delivery charge", "kitne din", "fee"]):
+    if any(w in lower for w in ["ship", "delivery charge", "kitne din", "fee", "डिलीवरी", "शिपिंग"]):
         return (
             "₹499 se upar ke sabhi orders par shipping bilkul free hai, aur ₹499 se kam par ₹50 shipping charge lagta hai. Standard delivery mein 3 se 5 business days lagte hain."
             if is_hi
             else "We offer free shipping on orders above ₹499, and a ₹50 shipping fee on orders below ₹499. Standard delivery takes 3 to 5 business days."
         )
 
-    if any(w in lower for w in ["cod", "cash on delivery", "upi", "pay"]):
+    if any(w in lower for w in ["cod", "cash on delivery", "upi", "pay", "कैश ऑन डिलीवरी", "पेमेंट"]):
         return (
             "Haan ji, ₹2,500 tak ke orders par Cash on Delivery available hai, aur aap doorstep par cash ya UPI dono se payment kar sakte hain."
             if is_hi
             else "Yes, Cash on Delivery is available for orders up to ₹2,500, and you can pay by cash or UPI right at your doorstep."
         )
 
-    if any(w in lower for w in ["cancel", "radd"]):
+    if any(w in lower for w in ["cancel", "radd", "कैंसिल", "रद्द"]):
         return (
             "Orders sirf tabhi cancel ho sakte hain jab unka status Processing ho. Shipped ya Out for Delivery hone ke baad cancel nahi hota, par aap doorstep par delivery refuse kar sakte hain. Apna Order ID batayein toh main check karoon?"
             if is_hi
             else "Orders can only be cancelled while in Processing status. Once Shipped or Out for Delivery, they cannot be cancelled, though you may refuse doorstep delivery. Please share your Order ID so I can check."
+        )
+
+    # Product & catalog inquiries without order ID
+    if any(w in lower for w in ["vitamin c", "serum", "sunscreen", "spf", "green tea", "face wash", "toner", "product", "catalog", "price", "kitne ka", "cost", "फायदे", "कीमत", "सीरम", "सनस्क्रीन"]):
+        if any(w in lower for w in ["vitamin c", "serum", "सीरम"]):
+            return (
+                "Hamara Vitamin C Serum (30ml) ₹699 ka hai. Yeh skin tone ko brighten karta hai, dark spots aur pigmentation ko reduce karta hai aur collagen boost karta hai."
+                if is_hi
+                else "Our Vitamin C Serum (30ml) is priced at ₹699. It brightens skin tone, fades dark spots and pigmentation, and boosts collagen for radiant skin."
+            )
+        if any(w in lower for w in ["sunscreen", "spf", "धूप", "सनस्क्रीन"]):
+            return (
+                "Hamara Hydrating Sunscreen SPF 50 ₹499 ka hai. Yeh lightweight aur non-greasy hai jo high UVA/UVB protection ke saath deep hydration deta hai."
+                if is_hi
+                else "Our Hydrating Sunscreen SPF 50 is ₹499. It offers lightweight, non-greasy broad-spectrum UVA/UVB protection with deep hydration for all skin types."
+            )
+        if any(w in lower for w in ["green tea", "face wash", "toner", "मुंहासे", "पिंपल", "acne", "oil"]):
+            return (
+                "Hamara Green Tea Face Wash + Toner combo ₹850 ka hai. Yeh excess oil control karta hai, pores ko deeply clean karta hai aur acne-prone skin ko calm karta hai."
+                if is_hi
+                else "Our Green Tea Face Wash + Toner combo is ₹850. It gently controls excess oil, clears pores, and calms irritated or acne-prone skin."
+            )
+        return (
+            "Aura Skincare ke catalog mein Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499) aur Green Tea Face Wash + Toner (₹850) available hain. Aap kiske baare mein jaan-na chahenge?"
+            if is_hi
+            else "Aura Skincare offers Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499), and Green Tea Face Wash + Toner (₹850). Which product would you like to know more about?"
         )
 
     return (
@@ -270,14 +314,22 @@ async def generate_agent_reply(
                 contents.append({"role": role, "parts": [{"text": turn.text}]})
             contents.append({"role": "user", "parts": [{"text": user_text + tool_context}]})
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
             payload = {
                 "system_instruction": {"parts": [{"text": system_prompt}]},
                 "contents": contents,
-                "generationConfig": {"temperature": 0.25, "maxOutputTokens": 140},
+                "generationConfig": {
+                    "temperature": 0.25,
+                    "maxOutputTokens": 140,
+                    "thinkingConfig": {"thinkingBudget": 0},
+                },
             }
-            async with httpx.AsyncClient(timeout=6.0) as client:
-                resp = await client.post(url, json=payload)
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.post(
+                    url,
+                    headers={"Content-Type": "application/json", "x-goog-api-key": gemini_key},
+                    json=payload,
+                )
                 if resp.status_code == 200:
                     data = resp.json()
                     text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -396,13 +448,18 @@ async def build_structured_summary(transcript: List[TranscriptTurn]) -> CallOutc
                 "call_summary (concise 1-2 sentence English summary of the call outcome).\n\n"
                 f"Transcript:\n{full_text}"
             )
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+            async with httpx.AsyncClient(timeout=7.0) as client:
                 resp = await client.post(
                     url,
+                    headers={"Content-Type": "application/json", "x-goog-api-key": gemini_key},
                     json={
                         "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.1},
+                        "generationConfig": {
+                            "responseMimeType": "application/json",
+                            "temperature": 0.1,
+                            "thinkingConfig": {"thinkingBudget": 0},
+                        },
                     },
                 )
                 if resp.status_code == 200:

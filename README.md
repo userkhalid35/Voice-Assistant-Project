@@ -1,3 +1,4 @@
+
 # Aura Skincare — Voice Concierge Studio (Aria)
 
 A real-time, low-latency AI Voice CX Specialist built with **Python**, **FastAPI**, **Astral `uv`**, and **Dual Hinglish TTS** (Sarvam AI Bulbul v3 + Microsoft Edge Neural TTS fallback). Aria assists customers with live order lookups, cancellations, return policies, shipping inquiries, and out-of-scope redirection in natural urban Hinglish and Indian English.

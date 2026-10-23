@@ -22,7 +22,6 @@ env/
 # Temporary test artifacts & MCP logs
 .playwright-mcp/
 .taskmaster/
-structure.txt
 
 # IDEs and OS-specific files
 .vscode/

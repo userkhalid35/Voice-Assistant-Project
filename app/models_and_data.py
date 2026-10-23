@@ -47,11 +47,15 @@ def reset_orders() -> Dict[str, Dict[str, Any]]:
 
 BRAND_POLICIES = """
 Aura Skincare Brand & Policy Guidelines:
-1. Brand Overview: Premium organic Indian skincare brand focused on simple, effective formulations.
-2. Shipping Policy: Free delivery on orders above ₹499. Orders below ₹499 have a ₹50 shipping fee. Standard delivery takes 3-5 business days.
-3. Return & Refund Policy: Returns are accepted ONLY within 7 days of delivery for unopened, unused products in original packaging. Opened or used products CANNOT be returned. Damaged or defective products must be reported within 48 hours of delivery with photos for a replacement.
-4. Cancellation Policy: Orders can be cancelled ONLY while their status is 'Processing'. Once an order is 'Shipped' or 'Out for Delivery', it cannot be cancelled (customers may refuse delivery at the doorstep).
-5. Cash on Delivery (COD): Available for orders up to ₹2,500. Customers can pay via cash or UPI at the doorstep.
+1. Brand Overview: Premium organic Indian skincare brand focused on clean, natural, and effective formulations.
+2. Official Product Catalog & Pricing:
+   - Vitamin C Serum (30ml) — ₹699: Enriched with pure Vitamin C; brightens skin tone, fades dark spots and pigmentation, and boosts collagen for radiant skin.
+   - Hydrating Sunscreen SPF 50 — ₹499: Lightweight, non-comedogenic broad-spectrum UVA/UVB protection with deep hydration for all skin types.
+   - Green Tea Face Wash + Toner — ₹850: Clarifying antioxidant cleanser and alcohol-free toner combo; controls excess oil, clears pores, and calms irritated or acne-prone skin.
+3. Shipping Policy: Free delivery on orders above ₹499. Orders below ₹499 have a ₹50 shipping fee. Standard delivery takes 3-5 business days.
+4. Return & Refund Policy: Returns are accepted ONLY within 7 days of delivery for unopened, unused products in original packaging. Opened or used products CANNOT be returned under any circumstances. Damaged or defective products must be reported within 48 hours of delivery with photos for a free replacement.
+5. Cancellation Policy: Orders can be cancelled ONLY while their status is 'Processing'. Once an order is 'Shipped' or 'Out for Delivery', it cannot be cancelled (customers may refuse delivery at the doorstep).
+6. Cash on Delivery (COD): Available for orders up to ₹2,500. Customers can pay via cash or UPI at the doorstep.
 """
 
 def build_system_prompt(language_mode: str = "hinglish") -> str:

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +8,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg-linen: #FAF7F2;
@@ -17,17 +20,33 @@
       --terracotta: #C86D51;
       --charcoal: #1C2420;
     }
+
     body {
       background-color: var(--bg-linen);
       color: var(--charcoal);
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    .font-serif-editorial { font-family: 'Cormorant Garamond', serif; }
-    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
-    @keyframes wavePulse {
-      0%, 100% { transform: scaleY(0.25); }
-      50% { transform: scaleY(1); }
+
+    .font-serif-editorial {
+      font-family: 'Cormorant Garamond', serif;
     }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @keyframes wavePulse {
+
+      0%,
+      100% {
+        transform: scaleY(0.25);
+      }
+
+      50% {
+        transform: scaleY(1);
+      }
+    }
+
     .wave-bar {
       width: 4px;
       height: 28px;
@@ -37,42 +56,80 @@
       transition: transform 0.1s ease;
       transform-origin: bottom;
     }
+
     .wave-active .wave-bar {
       animation: wavePulse 0.85s ease-in-out infinite;
     }
-    .wave-active .wave-bar:nth-child(2) { animation-delay: 0.12s; }
-    .wave-active .wave-bar:nth-child(3) { animation-delay: 0.24s; }
-    .wave-active .wave-bar:nth-child(4) { animation-delay: 0.36s; }
-    .wave-active .wave-bar:nth-child(5) { animation-delay: 0.18s; }
-    .wave-active .wave-bar:nth-child(6) { animation-delay: 0.30s; }
-    .wave-active .wave-bar:nth-child(7) { animation-delay: 0.10s; }
+
+    .wave-active .wave-bar:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    .wave-active .wave-bar:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+
+    .wave-active .wave-bar:nth-child(4) {
+      animation-delay: 0.36s;
+    }
+
+    .wave-active .wave-bar:nth-child(5) {
+      animation-delay: 0.18s;
+    }
+
+    .wave-active .wave-bar:nth-child(6) {
+      animation-delay: 0.30s;
+    }
+
+    .wave-active .wave-bar:nth-child(7) {
+      animation-delay: 0.10s;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+
+<body class="min-h-screen min-h-[100dvh] flex flex-col w-full max-w-full overflow-x-hidden bg-[#FAF7F2] text-[#1C2420] antialiased" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
   <!-- Top Botanical Brand Header -->
-  <header class="border-b border-[#E2D9C8] bg-[#FAF7F2]/90 sticky top-0 z-20 backdrop-blur-sm">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-10 h-10 rounded-full bg-[#233B30] text-[#FAF7F2] flex items-center justify-center font-serif-editorial text-2xl font-bold tracking-wider">
-          A
-        </div>
-        <div>
-          <div class="flex items-center gap-2.5">
-            <h1 class="font-serif-editorial text-2xl md:text-3xl font-bold tracking-tight text-[#1C2420]">AURA SKINCARE</h1>
-            <span class="text-[11px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#E8E2D5] text-[#233B30] font-semibold">Botanical CX Desk</span>
+  <header class="border-b border-[#E2D9C8] bg-[#FAF7F2]/95 sticky top-0 z-30 backdrop-blur-md shadow-xs" style="padding-top: max(0.5rem, env(safe-area-inset-top));">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+      <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#233B30] text-[#FAF7F2] flex items-center justify-center font-serif-editorial text-2xl font-bold tracking-wider shadow-inner shrink-0">
+            A
           </div>
-          <p class="text-xs text-[#5A625E]">Aria — Real-Time Voice Support Specialist (Hinglish & Indian English)</p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-serif-editorial text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-[#1C2420]">
+                AURA SKINCARE
+              </h1>
+              <span
+                class="text-[10px] sm:text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E8E2D5] text-[#233B30] font-bold">
+                Voice Desk
+              </span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-[#5A625E] line-clamp-1">
+              Aria — AI Customer Support Specialist (Gemini 2.5 Flash)
+            </p>
+          </div>
+        </div>
+
+        <!-- Mobile quick state dot -->
+        <div class="sm:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E8E2D5] text-[#1C2420]">
+          <span id="mobileStateDot" class="w-2 h-2 rounded-full bg-[#6B7280]"></span>
+          <span id="mobileStateLabel">Ready</span>
         </div>
       </div>
 
       <!-- Language Mode Toggle -->
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-medium text-[#5A625E]">Voice Mode:</span>
-        <div class="inline-flex rounded-full p-1 bg-[#F3EFE6] border border-[#E2D9C8]">
-          <button id="btnLangHinglish" onclick="setLanguageMode('hinglish')" class="px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition">
+      <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-[#E2D9C8]/60 sm:border-t-0">
+        <span class="text-xs font-semibold text-[#5A625E] shrink-0">Voice Mode:</span>
+        <div class="inline-flex rounded-full p-1 bg-[#F3EFE6] border border-[#E2D9C8] shadow-xs">
+          <button id="btnLangHinglish" onclick="setLanguageMode('hinglish')"
+            class="min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition active:scale-95">
             Hinglish (Default)
           </button>
-          <button id="btnLangEnglish" onclick="setLanguageMode('english')" class="px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition">
+          <button id="btnLangEnglish" onclick="setLanguageMode('english')"
+            class="min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition active:scale-95">
             Indian English
           </button>
         </div>
@@ -80,27 +137,29 @@
     </div>
   </header>
 
-  <!-- Main 2-Column Studio Workbench -->
-  <main class="max-w-7xl mx-auto w-full px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-    <!-- Left Column: Voice Call Console & Live Transcript (5 cols) -->
-    <section class="lg:col-span-5 flex flex-col gap-5">
+  <!-- Main Studio Workbench (Mobile single-column, Desktop 12-column) -->
+  <main class="max-w-7xl mx-auto w-full px-3.5 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 flex-1">
+    <!-- Left Column: Voice Call Console & Live Transcript (lg: 5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4 sm:gap-5">
       <!-- Call Control Card -->
-      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-5">
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
           <div>
-            <span class="text-[11px] uppercase tracking-widest text-[#5A625E] font-semibold">Specialist on Duty</span>
-            <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Aria — Order & Policy Desk</h2>
+            <span class="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#5A625E] font-bold">Specialist on Duty</span>
+            <h2 class="font-serif-editorial text-xl sm:text-2xl font-bold text-[#1C2420]">Aria — Order & Policy Desk</h2>
           </div>
           <!-- Live State Indicator Badge -->
-          <div id="stateBadge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]">
+          <div id="stateBadge"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]">
             <span id="stateDot" class="w-2.5 h-2.5 rounded-full bg-[#6B7280]"></span>
             <span id="stateLabel">Idle — Ready</span>
           </div>
         </div>
 
-        <!-- Organic Terracotta Audio Waveform Visualizer -->
-        <div class="bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-5 mb-5 flex flex-col items-center justify-center min-h-[140px]">
-          <div id="waveContainer" class="flex items-center gap-2 mb-2">
+        <!-- Terracotta Audio Waveform Visualizer -->
+        <div
+          class="bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-4 sm:p-5 mb-4 flex flex-col items-center justify-center min-h-[125px] sm:min-h-[140px]">
+          <div id="waveContainer" class="flex items-center gap-2 mb-2.5">
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
@@ -111,67 +170,86 @@
           </div>
           <div class="flex items-center gap-2 mb-2">
             <span id="micStatusDot" class="w-2.5 h-2.5 rounded-full bg-gray-400 transition-colors"></span>
-            <span id="micStatusText" class="text-[11px] text-[#5A625E] font-medium">Mic: Standby (Click Start Call)</span>
+            <span id="micStatusText" class="text-[11px] text-[#5A625E] font-semibold">Mic: Standby (Click Start Call)</span>
           </div>
-          <p id="liveCaption" class="text-xs text-center text-[#5A625E] italic max-w-sm">
-            Click "Start Call" and speak naturally into your microphone, or click any quick prompt on the right.
+          <p id="liveCaption" class="text-xs text-center text-[#5A625E] italic max-w-sm px-2 leading-relaxed">
+            Tap "Start Call" to talk naturally to Aria, or tap any prompt below.
           </p>
         </div>
 
-        <!-- Start / End Call + Barge-in Controls -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-          <button id="btnStartCall" onclick="startCall()" class="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-[#233B30] hover:bg-[#1A2C24] text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm">
-            <span>●</span> Start Call
+        <!-- Primary Voice Action Buttons (48px+ touch targets) -->
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mb-3.5">
+          <button id="btnStartCall" onclick="startCall()"
+            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#233B30] hover:bg-[#1A2C24] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation">
+            <span class="text-xs">●</span> Start Call
           </button>
-          <button id="btnEndCall" onclick="endCall()" disabled class="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none text-[#FAF7F2] transition flex items-center justify-center gap-2">
-            <span>■</span> End Call
+          <button id="btnEndCall" onclick="endCall()" disabled
+            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation">
+            <span class="text-xs">■</span> End Call
           </button>
         </div>
 
-        <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#E2D9C8]">
-          <button id="btnPushToTalk" onclick="toggleMicManual()" disabled class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] disabled:opacity-40 transition">
-            🎙️ Tap to Speak / Interrupt (Barge-In)
-          </button>
-          <span id="toolIndicator" class="font-mono-code text-[11px] text-[#233B30] bg-[#E3ECE8] px-2.5 py-1 rounded hidden"></span>
+        <!-- Secondary Sub-Controls (Pause/Resume & Barge-In) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E2D9C8]">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button id="btnPauseResume" onclick="togglePauseResume()" disabled
+              class="flex-1 sm:flex-none min-h-[44px] text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 disabled:opacity-40 transition flex items-center justify-center gap-1.5 touch-manipulation">
+              <span id="pauseResumeIcon">⏸️</span> <span id="pauseResumeText">Pause Listening</span>
+            </button>
+            <button id="btnPushToTalk" onclick="handleBargeIn()" disabled
+              class="flex-1 sm:flex-none min-h-[44px] text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 disabled:opacity-40 transition flex items-center justify-center gap-1 touch-manipulation">
+              🎙️ Interrupt
+            </button>
+          </div>
+          <span id="toolIndicator"
+            class="font-mono-code text-[11px] text-[#233B30] bg-[#E3ECE8] px-2.5 py-1 rounded hidden font-semibold"></span>
         </div>
 
-        <!-- Manual Text Input Bar (For quiet environments or instant testing) -->
+        <!-- Manual Text Input Bar (iOS 16px text prevents auto-zoom) -->
         <form onsubmit="handleManualSubmit(event)" class="mt-4 flex gap-2">
-          <input id="manualInput" type="text" placeholder="Or type a message to Aria (e.g., Where is ORD-101?)..." class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#233B30]" />
-          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-[#233B30] text-[#FAF7F2] hover:bg-[#1A2C24] transition">
+          <input id="manualInput" type="text" placeholder="Or type a question (e.g. Where is ORD-101?)..."
+            class="flex-1 min-h-[44px] bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl px-3.5 py-2 text-base sm:text-xs text-[#1C2420] placeholder:text-[#88908B] focus:outline-none focus:border-[#233B30] focus:ring-1 focus:ring-[#233B30] transition" />
+          <button type="submit"
+            class="min-h-[44px] px-4 sm:px-5 py-2 rounded-xl text-xs font-bold bg-[#233B30] text-[#FAF7F2] hover:bg-[#1A2C24] active:scale-95 transition shrink-0 touch-manipulation">
             Send
           </button>
         </form>
       </div>
 
       <!-- Chronological Call Transcript Card -->
-      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-5 flex-1 flex flex-col min-h-[290px]">
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-4 sm:p-5 flex-1 flex flex-col min-h-[260px] sm:min-h-[300px]">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-serif-editorial text-xl font-bold text-[#1C2420]">Live Call Transcript</h3>
+          <h3 class="font-serif-editorial text-lg sm:text-xl font-bold text-[#1C2420]">Live Call Transcript</h3>
           <span id="turnCounter" class="text-xs font-mono-code text-[#5A625E]">0 turns</span>
         </div>
-        <div id="transcriptList" class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-4 overflow-y-auto space-y-3 max-h-[340px]">
-          <p class="text-xs text-[#5A625E] text-center py-10">No active conversation yet. Start a call to view the live chronological transcript.</p>
+        <div id="transcriptList"
+          class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-3 sm:p-4 overflow-y-auto space-y-3 max-h-[300px] sm:max-h-[350px]">
+          <p class="text-xs text-[#5A625E] text-center py-8 sm:py-10">No active conversation yet. Tap "Start Call" or send a message to view the transcript.</p>
         </div>
       </div>
     </section>
 
-    <!-- Right Column: Evaluator Helper Table, Quick Scenarios & Post-Call JSON (7 cols) -->
-    <section class="lg:col-span-7 flex flex-col gap-5">
-      <!-- Live Test Orders Helper Card (Requirement 2E) -->
-      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+    <!-- Right Column: Evaluator Helper Table, Quick Prompts & Post-Call Summary (lg: 7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-4 sm:gap-5">
+      <!-- Live Mock Order Database Card -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <span class="text-[11px] uppercase tracking-widest text-[#C86D51] font-bold">Evaluator Helper Panel</span>
-            <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Live Mock Order Database</h2>
+            <span class="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#C86D51] font-bold">Evaluator Helper Panel</span>
+            <h2 class="font-serif-editorial text-xl sm:text-2xl font-bold text-[#1C2420]">Live Mock Order Database</h2>
           </div>
-          <button onclick="resetDemoData()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] text-[#1C2420] transition">
+          <button onclick="resetDemoData()"
+            class="min-h-[40px] text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] active:scale-95 text-[#1C2420] transition touch-manipulation">
             ↺ Reset Demo Orders
           </button>
         </div>
 
-        <div class="overflow-x-auto bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl">
-          <table class="w-full text-left border-collapse text-xs">
+        <div class="block lg:hidden text-[10px] text-[#5A625E] italic mb-1.5 flex items-center gap-1">
+          <span>↔</span> Swipe table horizontally to see all columns
+        </div>
+
+        <div class="overflow-x-auto bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl shadow-2xs" style="-webkit-overflow-scrolling: touch;">
+          <table class="w-full text-left border-collapse text-xs min-w-[580px]">
             <thead>
               <tr class="border-b border-[#E2D9C8] bg-[#EFEAE0] text-[#5A625E] uppercase tracking-wider text-[10px]">
                 <th class="py-2.5 px-3">Order ID</th>
@@ -186,88 +264,111 @@
           </table>
         </div>
 
-        <!-- One-Click Evaluator Voice Test Scenarios -->
+        <!-- One-Click Evaluator Voice Test Prompts -->
         <div class="mt-4">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-[#5A625E] mb-2">
-            One-Click Evaluator Test Prompts (Simulates Speaking to Aria):
+          <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#5A625E] mb-2.5">
+            One-Click Test Prompts (Simulates Customer Speech):
           </p>
           <div class="flex flex-wrap gap-2">
-            <button onclick="simulatePrompt('Mera order ORD-101 kahan pahuncha hai?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+            <button onclick="simulatePrompt('Mera order ORD-101 kahan pahuncha hai?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
               📦 Track ORD-101 (Hinglish)
             </button>
-            <button onclick="simulatePrompt('Please cancel my order ORD-103 right now.')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+            <button onclick="simulatePrompt('Please cancel my order ORD-103 right now.')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
               ✕ Cancel ORD-103 (Allowed)
             </button>
-            <button onclick="simulatePrompt('Can you cancel my order ORD-101?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+            <button onclick="simulatePrompt('Can you cancel my order ORD-101?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
               🚫 Cancel ORD-101 (Policy Block)
             </button>
-            <button onclick="simulatePrompt('I bought ORD-102 14 days ago and opened it. Can I return it?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
-              🛡️ Return Opened/14d Product (Policy Block)
+            <button onclick="simulatePrompt('I bought ORD-102 14 days ago and opened it. Can I return it?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
+              🛡️ Return Opened/14d (Policy Block)
             </button>
-            <button onclick="simulatePrompt('Where is my order ORD-999?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
-              ❓ Invalid Order ID (ORD-999)
+            <button onclick="simulatePrompt('Aapka Vitamin C serum kitne ka hai aur fayde kya hain?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
+              ✨ Vitamin C Pricing & Benefits
             </button>
-            <button onclick="simulatePrompt('Can you book me a flight to Goa this weekend?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
-              ✈️ Out-of-Scope (Flight to Goa)
+            <button onclick="simulatePrompt('Where is my order ORD-999?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
+              ❓ Invalid ID (ORD-999)
+            </button>
+            <button onclick="simulatePrompt('Can you book me a flight to Goa this weekend?')"
+              class="min-h-[40px] text-xs px-3.5 py-2 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] active:scale-95 transition touch-manipulation">
+              ✈️ Out-of-Scope (Goa Flight)
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Brand Policy Quick Reference Card -->
-      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <!-- Brand Policy Quick Reference Cards (Responsive grid) -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
         <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
           <p class="font-bold text-[#233B30] mb-1">Shipping</p>
-          <p class="text-[#5A625E]">Free &gt; ₹499 (₹50 below). 3–5 business days.</p>
+          <p class="text-[#5A625E] leading-relaxed">Free &gt; ₹499 (₹50 below). 3–5 business days.</p>
         </div>
         <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
           <p class="font-bold text-[#233B30] mb-1">Returns</p>
-          <p class="text-[#5A625E]">7 days, unopened &amp; unused only. 48h w/ photo for damage.</p>
+          <p class="text-[#5A625E] leading-relaxed">7 days, unopened &amp; unused only. 48h w/ photos for damage.</p>
         </div>
         <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
           <p class="font-bold text-[#233B30] mb-1">Cancellations</p>
-          <p class="text-[#5A625E]">Only while <code>Processing</code>. Refuse at doorstep if shipped.</p>
+          <p class="text-[#5A625E] leading-relaxed">Only while <code>Processing</code>. Refuse at doorstep if shipped.</p>
         </div>
         <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
           <p class="font-bold text-[#233B30] mb-1">Cash on Delivery</p>
-          <p class="text-[#5A625E]">Available up to ₹2,500 via Cash or UPI at doorstep.</p>
+          <p class="text-[#5A625E] leading-relaxed">Available up to ₹2,500 via Cash or UPI at doorstep.</p>
         </div>
       </div>
 
-      <!-- Post-Call Structured JSON Summary Card (Requirement 2D) -->
-      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 flex-1 flex flex-col">
+      <!-- Post-Call Structured JSON Summary Card -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-4 sm:p-6 flex-1 flex flex-col">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <span class="text-[11px] uppercase tracking-widest text-[#233B30] font-bold">Post-Call Outcome (Requirement 2D)</span>
-            <h3 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Structured Call Summary (JSON)</h3>
+            <span class="text-[10px] sm:text-[11px] uppercase tracking-widest text-[#233B30] font-bold">Post-Call Outcome</span>
+            <h3 class="font-serif-editorial text-xl sm:text-2xl font-bold text-[#1C2420]">Structured Call Summary (JSON)</h3>
           </div>
-          <button onclick="copySummaryJson()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] transition">
+          <button onclick="copySummaryJson()"
+            class="min-h-[40px] text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] active:scale-95 transition touch-manipulation">
             Copy JSON
           </button>
         </div>
-        <pre id="summaryJsonBox" class="flex-1 bg-[#1C2420] text-[#E8E2D5] font-mono-code text-xs p-4 rounded-xl overflow-x-auto leading-relaxed">{
-  "status": "End the call or run a test scenario to generate the structured JSON call outcome."
+        <pre id="summaryJsonBox"
+          class="flex-1 bg-[#1C2420] text-[#E8E2D5] font-mono-code text-[11px] sm:text-xs p-3.5 sm:p-4 rounded-xl overflow-x-auto leading-relaxed max-h-[280px] break-words whitespace-pre-wrap sm:whitespace-pre">{
+  "status": "End the call or tap a prompt to generate structured call outcome JSON."
 }</pre>
       </div>
     </section>
   </main>
 
   <script>
-    // Global Conversation & Audio State
+    // =========================================================================
+    // 1. GLOBAL STATE & SESSION LIFECYCLE MANAGEMENT
+    // =========================================================================
     let callActive = false;
-    let languageMode = "hinglish";
-    let agentState = "IDLE"; // IDLE | LISTENING | THINKING | SPEAKING
+    let isPaused = false;
+    let languageMode = "hinglish"; // "hinglish" (hi-IN) | "english" (en-IN)
+    let agentState = "IDLE"; // IDLE | STARTING | LISTENING | RECOGNIZING | PROCESSING | SPEAKING | PAUSED | ERROR
     let transcript = [];
     let currentAudio = null;
 
-    // Speech Recognition & Silence Debouncing State
-    let recognition = null;
+    // Speech Recognition State
+    let activeRecognizer = null;
     let isRecognizing = false;
     let isAriaSpeaking = false;
-    let turnDraft = "";
-    let silenceCommitTimer = null;
+    let sessionEpoch = 0; // Incremented on every session state transition to invalidate stale callbacks
+
+    // Real-Time Transcript Buffers (Google Voice Input Style)
+    let accumulatedFinalText = "";
+    let currentInterimText = "";
+    let silenceTimer = null;
     let recognitionRestartTimer = null;
     let ariaSafetyTimer = null;
+
+    // Silence detection thresholds
+    const SILENCE_AFTER_FINAL_MS = 850;   // Delay after Chrome confirms a finalized phrase
+    const SILENCE_AFTER_INTERIM_MS = 1300; // Delay while user may be pausing mid-sentence
 
     // Hardware AudioContext Visualizer
     let micStream = null;
@@ -276,6 +377,14 @@
     let visualizerFrameId = null;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    // =========================================================================
+    // 2. UI STATUS & VISUAL FEEDBACK HELPERS
+    // =========================================================================
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
 
     function updateMicBadge(state, labelText) {
       const dot = document.getElementById("micStatusDot");
@@ -294,9 +403,125 @@
       }
     }
 
+    function renderLiveCaption(finalText, interimText) {
+      const caption = document.getElementById("liveCaption");
+      if (!finalText && !interimText) {
+        if (agentState === "LISTENING") {
+          caption.textContent = "Listening to you... speak naturally";
+        } else if (agentState === "PAUSED") {
+          caption.textContent = "Listening paused. Click 'Resume Listening' to speak.";
+        }
+        return;
+      }
+
+      let html = "";
+      if (finalText) {
+        html += `<span class="font-semibold text-[#1C2420]">${escapeHtml(finalText)}</span>`;
+      }
+      if (interimText) {
+        html += ` <span class="text-[#C86D51] italic">${escapeHtml(interimText)}...</span>`;
+      }
+      caption.innerHTML = html;
+    }
+
+    function setAgentState(state, captionText) {
+      agentState = state;
+      const badge = document.getElementById("stateBadge");
+      const dot = document.getElementById("stateDot");
+      const label = document.getElementById("stateLabel");
+      const wave = document.getElementById("waveContainer");
+      const caption = document.getElementById("liveCaption");
+
+      if (captionText) caption.textContent = captionText;
+
+      if (state === "LISTENING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E3ECE8] text-[#233B30] border border-[#233B30]/30";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping";
+        label.textContent = "Listening";
+        wave.classList.add("wave-active");
+      } else if (state === "RECOGNIZING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#DCFCE7] text-[#166534] border border-[#166534]/30";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse";
+        label.textContent = "Transcribing Speech";
+        wave.classList.add("wave-active");
+      } else if (state === "PROCESSING" || state === "STARTING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/40";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse";
+        label.textContent = state === "STARTING" ? "Connecting..." : "Thinking...";
+        wave.classList.remove("wave-active");
+      } else if (state === "SPEAKING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F9E6E0] text-[#C86D51] border border-[#C86D51]/40";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#C86D51] animate-pulse";
+        label.textContent = "Speaking";
+        wave.classList.add("wave-active");
+      } else if (state === "PAUSED") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F3EFE6] text-[#6B7280] border border-[#D5CBB8]";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+        label.textContent = "Paused";
+        wave.classList.remove("wave-active");
+      } else if (state === "ERROR") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-600";
+        label.textContent = "Mic Error";
+        wave.classList.remove("wave-active");
+      } else {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#6B7280]";
+        label.textContent = "Idle — Ready";
+        wave.classList.remove("wave-active");
+      }
+
+      // Sync mobile header badge
+      const mDot = document.getElementById("mobileStateDot");
+      const mLabel = document.getElementById("mobileStateLabel");
+      if (mDot && mLabel) {
+        mLabel.textContent = label.textContent;
+        mDot.className = dot.className.replace("w-2.5 h-2.5", "w-2 h-2");
+      }
+    }
+
+    function updatePauseResumeButton(isCurrentlyPaused) {
+      const btn = document.getElementById("btnPauseResume");
+      const icon = document.getElementById("pauseResumeIcon");
+      const label = document.getElementById("pauseResumeText");
+      if (!btn || !icon || !label) return;
+
+      if (isCurrentlyPaused) {
+        icon.textContent = "▶️";
+        label.textContent = "Resume Listening";
+        btn.classList.add("bg-amber-100", "border-amber-300");
+      } else {
+        icon.textContent = "⏸️";
+        label.textContent = "Pause Listening";
+        btn.classList.remove("bg-amber-100", "border-amber-300");
+      }
+    }
+
+    function setLanguageMode(mode) {
+      languageMode = mode;
+      const btnHi = document.getElementById("btnLangHinglish");
+      const btnEn = document.getElementById("btnLangEnglish");
+      if (mode === "hinglish") {
+        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
+        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+      } else {
+        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
+        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+      }
+
+      // If active and currently listening, refresh recognition with new locale immediately
+      if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
+        startRecognitionSession();
+      }
+    }
+
+    // =========================================================================
+    // 3. HARDWARE MICROPHONE & VU-METER VISUALIZER
+    // =========================================================================
     async function initMicrophone() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         updateMicBadge("error", "Mic API not supported");
+        setAgentState("ERROR", "Browser does not support navigator.mediaDevices.getUserMedia.");
         return false;
       }
       try {
@@ -319,14 +544,13 @@
         const source = audioCtx.createMediaStreamSource(micStream);
         source.connect(analyser);
 
-        updateMicBadge("active", "Mic Live & Ready");
+        updateMicBadge("active", "Hardware Mic Active");
         startWaveformVisualizer();
         return true;
       } catch (err) {
-        console.error("Hardware mic error:", err);
+        console.error("Hardware mic access error:", err);
         updateMicBadge("error", "Mic Permission Blocked");
-        document.getElementById("liveCaption").textContent =
-          "⚠️ Microphone permission blocked. Click the lock/camera icon in Chrome address bar to Allow.";
+        setAgentState("ERROR", "⚠️ Microphone permission blocked. Click the lock/camera icon in Chrome address bar to Allow.");
         return false;
       }
     }
@@ -340,7 +564,7 @@
 
       function loop() {
         visualizerFrameId = requestAnimationFrame(loop);
-        if (!analyser || isAriaSpeaking) {
+        if (!analyser || isAriaSpeaking || isPaused) {
           waveBars.forEach(b => { b.style.transform = "scaleY(0.25)"; });
           return;
         }
@@ -352,9 +576,9 @@
         }
         const avg = sum / dataArray.length;
 
-        if (avg > 12) {
+        if (avg > 14) {
           updateMicBadge("active", `🎙️ Voice detected (${Math.round(avg)}%)`);
-        } else if (callActive && agentState === "LISTENING") {
+        } else if (callActive && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
           updateMicBadge("listening", "🎙️ Listening... Speak naturally");
         }
 
@@ -367,181 +591,482 @@
       loop();
     }
 
-    function getRecognizer() {
-      if (!SpeechRecognition) return null;
-      if (recognition) return recognition;
-
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-      recognition.lang = "en-IN";
-
-      recognition.onstart = () => {
-        isRecognizing = true;
-        if (callActive && !isAriaSpeaking && agentState === "LISTENING") {
-          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-        }
-      };
-
-      recognition.onresult = (event) => {
-        if (!callActive || isAriaSpeaking || agentState !== "LISTENING") return;
-
-        let fullText = "";
-        for (let i = 0; i < event.results.length; ++i) {
-          fullText += event.results[i][0].transcript + " ";
-        }
-        fullText = fullText.trim();
-        if (!fullText) return;
-
-        turnDraft = fullText;
-        document.getElementById("liveCaption").textContent = `"${fullText}..."`;
-        updateMicBadge("active", `🎙️ Transcribing: "${fullText.slice(-25)}"`);
-
-        // Check if the latest chunk was finalized
-        const latestIsFinal = event.results[event.results.length - 1].isFinal;
-
-        // Reset silence commit timer: natural conversational pause submits turn
-        if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
-        const delay = latestIsFinal ? 900 : 1200;
-        silenceCommitTimer = setTimeout(() => {
-          commitUserTurn();
-        }, delay);
-      };
-
-      recognition.onerror = (event) => {
-        isRecognizing = false;
-        if (event.error === "no-speech") {
-          // Normal silence timeout in Chrome
-          return;
-        }
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          updateMicBadge("error", "Mic Permission Blocked");
-          document.getElementById("liveCaption").textContent =
-            "⚠️ Microphone permission blocked. Click lock icon in browser address bar to Allow.";
-          return;
-        }
-        if (event.error === "network") {
-          updateMicBadge("error", "Speech Network Reconnecting...");
-          return;
-        }
-        console.warn("Speech recognition error:", event.error);
-      };
-
-      recognition.onend = () => {
-        isRecognizing = false;
-        // If there is pending speech that wasn't committed before Chrome closed the session, commit now!
-        if (turnDraft.trim() && callActive && !isAriaSpeaking && agentState === "LISTENING") {
-          commitUserTurn();
-          return;
-        }
-        // Otherwise revive listener if call is active and Aria is not speaking
-        if (callActive && !isAriaSpeaking && agentState === "LISTENING") {
-          scheduleRecognitionRestart(150);
-        }
-      };
-
-      return recognition;
-    }
-
-    function commitUserTurn() {
-      if (silenceCommitTimer) {
-        clearTimeout(silenceCommitTimer);
-        silenceCommitTimer = null;
+    // =========================================================================
+    // 4. SPEECH RECOGNITION CONTROLLER (GOOGLE VOICE INPUT LIFECYCLE)
+    // =========================================================================
+    function stopRecognitionSession() {
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
       }
-      if (!callActive || isAriaSpeaking || agentState !== "LISTENING") return;
-
-      const text = turnDraft.trim();
-      if (!text) return;
-
-      turnDraft = "";
-      stopRecognitionSafely();
-      sendUserTurn(text);
+      if (recognitionRestartTimer) {
+        clearTimeout(recognitionRestartTimer);
+        recognitionRestartTimer = null;
+      }
+      if (activeRecognizer) {
+        try {
+          activeRecognizer.onstart = null;
+          activeRecognizer.onresult = null;
+          activeRecognizer.onerror = null;
+          activeRecognizer.onend = null;
+          activeRecognizer.stop();
+        } catch (e) {
+          try { activeRecognizer.abort(); } catch (_) { }
+        }
+        activeRecognizer = null;
+      }
+      isRecognizing = false;
     }
 
     function scheduleRecognitionRestart(delay = 150) {
       if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
       recognitionRestartTimer = setTimeout(() => {
-        if (callActive && !isAriaSpeaking && agentState === "LISTENING" && !isRecognizing) {
-          startRecognitionSafely();
+        if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
+          startRecognitionSession();
         }
       }, delay);
     }
 
-    function startRecognitionSafely() {
-      if (!callActive || isAriaSpeaking || agentState !== "LISTENING" || isRecognizing) return;
-      const rec = getRecognizer();
-      if (!rec) return;
+    function startRecognitionSession() {
+      if (!callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING" || agentState === "SPEAKING") {
+        return;
+      }
+
+      if (!SpeechRecognition) {
+        updateMicBadge("error", "Web Speech API not supported");
+        setAgentState("ERROR", "Web Speech API is not supported in this browser. Please use Chrome or Edge.");
+        return;
+      }
+
+      // 1. Cleanly tear down any prior instance & bump epoch
+      stopRecognitionSession();
+      sessionEpoch++;
+      const thisEpoch = sessionEpoch;
+
+      // Reset buffers for fresh turn
+      accumulatedFinalText = "";
+      currentInterimText = "";
+
+      // 2. Instantiate fresh SpeechRecognition instance
+      const rec = new SpeechRecognition();
+      activeRecognizer = rec;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+
+      // In Hinglish mode, en-IN provides superior transcription for mixed Indian English,
+      // order IDs (ORD-101), and brand terms, while hi-IN supports Hindi speech.
+      rec.lang = (languageMode === "hinglish") ? "hi-IN" : "en-IN";
+
+      rec.onstart = () => {
+        if (thisEpoch !== sessionEpoch) return;
+        isRecognizing = true;
+        if (callActive && !isAriaSpeaking && !isPaused && agentState !== "PROCESSING") {
+          setAgentState("LISTENING", "Listening to you... speak naturally");
+          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+        }
+      };
+
+      rec.onresult = (event) => {
+        if (thisEpoch !== sessionEpoch || !callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING") {
+          return;
+        }
+
+        currentInterimText = "";
+        let latestChunkIsFinal = false;
+
+        // Process every changed result chunk via event.resultIndex
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const chunk = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            accumulatedFinalText += (accumulatedFinalText ? " " : "") + chunk.trim();
+            latestChunkIsFinal = true;
+          } else {
+            currentInterimText += (currentInterimText ? " " : "") + chunk.trim();
+          }
+        }
+
+        const fullSpokenText = (accumulatedFinalText + " " + currentInterimText).trim();
+        if (!fullSpokenText) return;
+
+        // Transition agent state to RECOGNIZING
+        if (agentState !== "RECOGNIZING") {
+          setAgentState("RECOGNIZING", null);
+        }
+
+        // Live real-time visual feedback (Google Voice Input Style)
+        renderLiveCaption(accumulatedFinalText, currentInterimText);
+        updateMicBadge("active", `🎙️ Transcribing: "${fullSpokenText.slice(-25)}"`);
+
+        // Reset silence commit timer
+        if (silenceTimer) clearTimeout(silenceTimer);
+        const timeoutMs = latestChunkIsFinal ? SILENCE_AFTER_FINAL_MS : SILENCE_AFTER_INTERIM_MS;
+        silenceTimer = setTimeout(() => {
+          finalizeUserTurn(thisEpoch);
+        }, timeoutMs);
+      };
+
+      rec.onerror = (event) => {
+        if (thisEpoch !== sessionEpoch) return;
+        isRecognizing = false;
+
+        // no-speech is normal silence timeout in Chrome; do NOT treat as error or interrupt user
+        if (event.error === "no-speech") {
+          return;
+        }
+        if (event.error === "aborted") {
+          return; // Normal programmatic stop
+        }
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          updateMicBadge("error", "Mic Permission Blocked");
+          setAgentState("ERROR", "⚠️ Microphone permission blocked. Click the lock icon in the address bar to Allow.");
+          return;
+        }
+        if (event.error === "audio-capture") {
+          updateMicBadge("error", "No Mic Hardware Found");
+          setAgentState("ERROR", "⚠️ No microphone hardware detected. Please connect a microphone or use the text box below.");
+          return;
+        }
+        if (event.error === "network") {
+          updateMicBadge("error", "Speech Network Reconnecting...");
+          scheduleRecognitionRestart(1200);
+          return;
+        }
+        console.warn("Speech recognition warning:", event.error);
+      };
+
+      rec.onend = () => {
+        if (thisEpoch !== sessionEpoch) return;
+        isRecognizing = false;
+
+        // If in an unrecoverable error state, do not attempt to revive
+        if (agentState === "ERROR") {
+          return;
+        }
+
+        const bufferedText = (accumulatedFinalText + " " + currentInterimText).trim();
+        // If user was speaking and Chrome timed out on silence, commit immediately
+        if (bufferedText && callActive && !isAriaSpeaking && !isPaused && agentState !== "PROCESSING") {
+          finalizeUserTurn(thisEpoch);
+          return;
+        }
+
+        // If empty and we should still be listening, safely revive with bounded backoff
+        if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
+          scheduleRecognitionRestart(300);
+        }
+      };
 
       try {
         rec.start();
         isRecognizing = true;
-      } catch (e) {
-        // Recognition might be in transition; retry shortly
+      } catch (err) {
         isRecognizing = false;
         scheduleRecognitionRestart(200);
       }
     }
 
-    function stopRecognitionSafely() {
-      if (recognitionRestartTimer) {
-        clearTimeout(recognitionRestartTimer);
-        recognitionRestartTimer = null;
+    function finalizeUserTurn(epoch) {
+      if (epoch !== sessionEpoch) return;
+      if (!callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING") return;
+
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
       }
-      if (recognition && isRecognizing) {
-        try {
-          recognition.stop();
-        } catch (e) {
-          try { recognition.abort(); } catch (_) {}
+
+      const fullText = (accumulatedFinalText + " " + currentInterimText).trim();
+
+      // NEVER submit an empty utterance to the backend!
+      if (!fullText) {
+        setAgentState("LISTENING", "Listening to you... speak naturally");
+        renderLiveCaption("", "");
+        return;
+      }
+
+      // Reset buffers immediately
+      accumulatedFinalText = "";
+      currentInterimText = "";
+
+      // Transition to PROCESSING
+      setAgentState("PROCESSING", `Processing: "${fullText}"`);
+      stopRecognitionSession();
+
+      // Submit valid turn to backend
+      sendUserTurn(fullText);
+    }
+
+    // =========================================================================
+    // 5. AUDIO PLAYBACK & SPEAKING-LISTENING MUTEX
+    // =========================================================================
+    function stopCurrentAudio() {
+      if (ariaSafetyTimer) {
+        clearTimeout(ariaSafetyTimer);
+        ariaSafetyTimer = null;
+      }
+      isAriaSpeaking = false;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function finishAriaSpeaking() {
+      if (ariaSafetyTimer) {
+        clearTimeout(ariaSafetyTimer);
+        ariaSafetyTimer = null;
+      }
+      currentAudio = null;
+
+      // 350ms acoustic echo guard delay allows speaker sound to clear room before activating mic
+      setTimeout(() => {
+        isAriaSpeaking = false;
+        if (callActive && !isPaused) {
+          setAgentState("LISTENING", "Listening to you... speak naturally");
+          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+          startRecognitionSession();
+        } else if (!callActive) {
+          setAgentState("IDLE", "Call ended.");
         }
-      }
-      isRecognizing = false;
+      }, 350);
     }
 
-    function setLanguageMode(mode) {
-      languageMode = mode;
-      const btnHi = document.getElementById("btnLangHinglish");
-      const btnEn = document.getElementById("btnLangEnglish");
-      if (mode === "hinglish") {
-        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
-        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+    function playAgentAudio(base64Data, mimeType, fallbackText) {
+      stopCurrentAudio();
+      stopRecognitionSession();
+      isAriaSpeaking = true;
+      setAgentState("SPEAKING", `Aria: "${fallbackText}"`);
+      updateMicBadge("standby", "Aria Speaking (Mic Muted)");
+
+      // Generous fail-safe safety timeout: proportional to text length (never cuts off legitimate speech)
+      const maxSeconds = Math.max(12, Math.ceil(fallbackText.length / 5));
+      if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
+      ariaSafetyTimer = setTimeout(() => {
+        if (isAriaSpeaking) {
+          finishAriaSpeaking();
+        }
+      }, maxSeconds * 1000);
+
+      if (base64Data) {
+        currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
+        currentAudio.onended = () => finishAriaSpeaking();
+        currentAudio.onerror = () => speakBrowserFallback(fallbackText);
+        currentAudio.play().catch(() => speakBrowserFallback(fallbackText));
       } else {
-        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
-        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+        speakBrowserFallback(fallbackText);
       }
     }
 
-    function setAgentState(state, captionText) {
-      agentState = state;
-      const badge = document.getElementById("stateBadge");
-      const dot = document.getElementById("stateDot");
-      const label = document.getElementById("stateLabel");
-      const wave = document.getElementById("waveContainer");
-      const caption = document.getElementById("liveCaption");
-
-      if (captionText) caption.textContent = captionText;
-
-      if (state === "LISTENING") {
-        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E3ECE8] text-[#233B30] border border-[#233B30]/30";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping";
-        label.textContent = "Listening";
-        wave.classList.add("wave-active");
-      } else if (state === "THINKING") {
-        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/40";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse";
-        label.textContent = "Thinking";
-        wave.classList.remove("wave-active");
-      } else if (state === "SPEAKING") {
-        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F9E6E0] text-[#C86D51] border border-[#C86D51]/40";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-[#C86D51] animate-pulse";
-        label.textContent = "Speaking";
-        wave.classList.add("wave-active");
-      } else {
-        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-[#6B7280]";
-        label.textContent = "Idle — Ready";
-        wave.classList.remove("wave-active");
+    function speakBrowserFallback(text) {
+      if (!window.speechSynthesis) {
+        finishAriaSpeaking();
+        return;
       }
+      isAriaSpeaking = true;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = languageMode === "hinglish" ? "hi-IN" : "en-IN";
+      utter.rate = 1.02;
+      utter.onend = () => finishAriaSpeaking();
+      utter.onerror = () => finishAriaSpeaking();
+      window.speechSynthesis.speak(utter);
+    }
+
+    // =========================================================================
+    // 6. CALL FLOW CONTROLS (START, END, PAUSE, BARGE-IN)
+    // =========================================================================
+    async function startCall() {
+      callActive = true;
+      isPaused = false;
+      transcript = [];
+      accumulatedFinalText = "";
+      currentInterimText = "";
+      renderTranscript();
+
+      document.getElementById("btnStartCall").disabled = true;
+      document.getElementById("btnStartCall").classList.add("opacity-50");
+      document.getElementById("btnEndCall").disabled = false;
+      document.getElementById("btnPauseResume").disabled = false;
+      document.getElementById("btnPushToTalk").disabled = false;
+      updatePauseResumeButton(false);
+
+      // 1. Initialize hardware microphone stream & visualizer immediately
+      await initMicrophone();
+
+      // 2. Play greeting and start conversational loop
+      setAgentState("STARTING", "Connecting to Aria...");
+      try {
+        const res = await fetch(`/api/greeting?language_mode=${languageMode}`);
+        const data = await res.json();
+        renderOrdersTable(data.orders);
+        transcript.push({ role: "assistant", text: data.reply_text, timestamp: new Date().toLocaleTimeString() });
+        renderTranscript();
+        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
+      } catch (err) {
+        setAgentState("LISTENING", "Connected. Speak now.");
+        startRecognitionSession();
+      }
+    }
+
+    async function sendUserTurn(userText) {
+      if (!userText || !userText.trim()) return;
+      stopCurrentAudio();
+      stopRecognitionSession();
+
+      transcript.push({ role: "user", text: userText, timestamp: new Date().toLocaleTimeString() });
+      renderTranscript();
+      setAgentState("PROCESSING", `Processing: "${userText}"`);
+
+      try {
+        const res = await fetch("/api/voice-turn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_text: userText,
+            history: transcript.slice(0, -1),
+            language_mode: languageMode
+          })
+        });
+        const data = await res.json();
+        renderOrdersTable(data.orders);
+
+        const toolBadge = document.getElementById("toolIndicator");
+        if (data.tool_used) {
+          toolBadge.textContent = `Tool: ${data.tool_used}`;
+          toolBadge.classList.remove("hidden");
+        } else {
+          toolBadge.classList.add("hidden");
+        }
+
+        transcript.push({
+          role: "assistant",
+          text: data.reply_text,
+          timestamp: new Date().toLocaleTimeString(),
+          tool_used: data.tool_used
+        });
+        renderTranscript();
+        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
+        refreshLiveSummary();
+      } catch (e) {
+        setAgentState("LISTENING", "Ready for next question.");
+        startRecognitionSession();
+      }
+    }
+
+    async function endCall() {
+      callActive = false;
+      isPaused = false;
+      sessionEpoch++; // Invalidate all pending session callbacks immediately
+
+      stopCurrentAudio();
+      stopRecognitionSession();
+
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
+      if (visualizerFrameId) cancelAnimationFrame(visualizerFrameId);
+
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+      }
+      accumulatedFinalText = "";
+      currentInterimText = "";
+      updateMicBadge("standby", "Mic: Standby (Call Ended)");
+
+      document.getElementById("btnStartCall").disabled = false;
+      document.getElementById("btnStartCall").classList.remove("opacity-50");
+      document.getElementById("btnEndCall").disabled = true;
+      document.getElementById("btnPauseResume").disabled = true;
+      document.getElementById("btnPushToTalk").disabled = true;
+      updatePauseResumeButton(false);
+
+      setAgentState("IDLE", "Call ended. Generating structured post-call summary...");
+      await refreshLiveSummary();
+      setAgentState("IDLE", "Call ended. Review transcript & JSON outcome on the right.");
+    }
+
+    function togglePauseResume() {
+      if (!callActive) return;
+
+      if (!isPaused) {
+        // PAUSE listening
+        isPaused = true;
+        stopCurrentAudio();
+        stopRecognitionSession();
+        setAgentState("PAUSED", "Listening Paused — Click 'Resume Listening' to speak");
+        updateMicBadge("standby", "Mic Paused");
+        updatePauseResumeButton(true);
+      } else {
+        // RESUME listening
+        isPaused = false;
+        setAgentState("LISTENING", "Listening to you... speak naturally");
+        updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+        updatePauseResumeButton(false);
+        startRecognitionSession();
+      }
+    }
+
+    function handleBargeIn() {
+      if (!callActive) return;
+      stopCurrentAudio();
+      isAriaSpeaking = false;
+      isPaused = false;
+      accumulatedFinalText = "";
+      currentInterimText = "";
+      if (silenceTimer) clearTimeout(silenceTimer);
+      setAgentState("LISTENING", "Interrupted — Listening to you now...");
+      updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+      document.getElementById("btnPauseResume").disabled = false;
+      updatePauseResumeButton(false);
+      startRecognitionSession();
+    }
+
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("manualInput");
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = "";
+      if (!callActive) {
+        callActive = true;
+        document.getElementById("btnStartCall").disabled = true;
+        document.getElementById("btnStartCall").classList.add("opacity-50");
+        document.getElementById("btnEndCall").disabled = false;
+        document.getElementById("btnPauseResume").disabled = false;
+        document.getElementById("btnPushToTalk").disabled = false;
+      }
+      sendUserTurn(val);
+    }
+
+    function simulatePrompt(text) {
+      if (!callActive) {
+        callActive = true;
+        document.getElementById("btnStartCall").disabled = true;
+        document.getElementById("btnStartCall").classList.add("opacity-50");
+        document.getElementById("btnEndCall").disabled = false;
+        document.getElementById("btnPauseResume").disabled = false;
+        document.getElementById("btnPushToTalk").disabled = false;
+      }
+      sendUserTurn(text);
+    }
+
+    // =========================================================================
+    // 7. SUMMARY & ORDERS RENDERING
+    // =========================================================================
+    async function refreshLiveSummary() {
+      if (transcript.length === 0) return;
+      try {
+        const res = await fetch("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript })
+        });
+        const summary = await res.json();
+        document.getElementById("summaryJsonBox").textContent = JSON.stringify(summary, null, 2);
+      } catch (e) { }
     }
 
     function renderOrdersTable(orders) {
@@ -583,233 +1108,12 @@
               ${t.tool_used ? `<span class="font-mono-code text-[10px] bg-[#E3ECE8] text-[#233B30] px-1.5 py-0.2 rounded">⚡ ${t.tool_used}</span>` : ''}
             </div>
             <div class="max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${isUser ? 'bg-[#233B30] text-[#FAF7F2]' : 'bg-[#EFEAE0] text-[#1C2420] border border-[#E2D9C8]'}">
-              ${t.text}
+              ${escapeHtml(t.text)}
             </div>
           </div>
         `;
       }).join("");
       box.scrollTop = box.scrollHeight;
-    }
-
-    function stopCurrentAudio() {
-      if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
-      ariaSafetyTimer = null;
-      isAriaSpeaking = false;
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-      }
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    }
-
-    function finishAriaSpeaking() {
-      if (ariaSafetyTimer) {
-        clearTimeout(ariaSafetyTimer);
-        ariaSafetyTimer = null;
-      }
-      currentAudio = null;
-
-      // 250ms guard buffer prevents speaker echo from triggering microphone recognition
-      setTimeout(() => {
-        isAriaSpeaking = false;
-        if (callActive) {
-          setAgentState("LISTENING", "Listening to you... speak naturally");
-          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-          startRecognitionSafely();
-        } else {
-          setAgentState("IDLE", "Call ended.");
-        }
-      }, 250);
-    }
-
-    function playAgentAudio(base64Data, mimeType, fallbackText) {
-      stopCurrentAudio();
-      isAriaSpeaking = true;
-      stopRecognitionSafely();
-      setAgentState("SPEAKING", `Aria: "${fallbackText}"`);
-      updateMicBadge("standby", "Aria Speaking (Mic Muted)");
-
-      // Hard safety timeout: if audio stalls, forcibly release lock after max 7 seconds
-      const maxSeconds = Math.max(3, Math.min(7, Math.ceil(fallbackText.length / 10)));
-      if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
-      ariaSafetyTimer = setTimeout(() => {
-        if (isAriaSpeaking) {
-          finishAriaSpeaking();
-        }
-      }, maxSeconds * 1000);
-
-      if (base64Data) {
-        currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
-        currentAudio.onended = () => finishAriaSpeaking();
-        currentAudio.onerror = () => speakBrowserFallback(fallbackText);
-        currentAudio.play().catch(() => speakBrowserFallback(fallbackText));
-      } else {
-        speakBrowserFallback(fallbackText);
-      }
-    }
-
-    function speakBrowserFallback(text) {
-      if (!window.speechSynthesis) {
-        finishAriaSpeaking();
-        return;
-      }
-      isAriaSpeaking = true;
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = languageMode === "hinglish" ? "hi-IN" : "en-IN";
-      utter.rate = 1.05;
-      utter.onend = () => finishAriaSpeaking();
-      utter.onerror = () => finishAriaSpeaking();
-      window.speechSynthesis.speak(utter);
-    }
-
-    async function startCall() {
-      callActive = true;
-      transcript = [];
-      turnDraft = "";
-      renderTranscript();
-      document.getElementById("btnStartCall").disabled = true;
-      document.getElementById("btnStartCall").classList.add("opacity-50");
-      document.getElementById("btnEndCall").disabled = false;
-      document.getElementById("btnPushToTalk").disabled = false;
-
-      // 1. Initialize hardware microphone stream & visualizer immediately
-      await initMicrophone();
-
-      // 2. Play greeting and start conversational loop
-      setAgentState("THINKING", "Connecting to Aria...");
-      try {
-        const res = await fetch(`/api/greeting?language_mode=${languageMode}`);
-        const data = await res.json();
-        renderOrdersTable(data.orders);
-        transcript.push({ role: "assistant", text: data.reply_text, timestamp: new Date().toLocaleTimeString() });
-        renderTranscript();
-        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
-      } catch (err) {
-        setAgentState("LISTENING", "Connected. Speak now.");
-        startRecognitionSafely();
-      }
-    }
-
-    async function sendUserTurn(userText) {
-      if (!userText.trim()) return;
-      stopCurrentAudio();
-      stopRecognitionSafely();
-
-      transcript.push({ role: "user", text: userText, timestamp: new Date().toLocaleTimeString() });
-      renderTranscript();
-      setAgentState("THINKING", `Processing: "${userText}"`);
-
-      try {
-        const res = await fetch("/api/voice-turn", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_text: userText,
-            history: transcript.slice(0, -1),
-            language_mode: languageMode
-          })
-        });
-        const data = await res.json();
-        renderOrdersTable(data.orders);
-
-        const toolBadge = document.getElementById("toolIndicator");
-        if (data.tool_used) {
-          toolBadge.textContent = `Tool: ${data.tool_used}`;
-          toolBadge.classList.remove("hidden");
-        } else {
-          toolBadge.classList.add("hidden");
-        }
-
-        transcript.push({
-          role: "assistant",
-          text: data.reply_text,
-          timestamp: new Date().toLocaleTimeString(),
-          tool_used: data.tool_used
-        });
-        renderTranscript();
-        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
-        refreshLiveSummary();
-      } catch (e) {
-        setAgentState("LISTENING", "Ready for next question.");
-        startRecognitionSafely();
-      }
-    }
-
-    async function endCall() {
-      callActive = false;
-      stopCurrentAudio();
-      stopRecognitionSafely();
-      if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
-      if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
-      if (visualizerFrameId) cancelAnimationFrame(visualizerFrameId);
-      if (micStream) {
-        micStream.getTracks().forEach(t => t.stop());
-        micStream = null;
-      }
-      turnDraft = "";
-      updateMicBadge("standby", "Mic: Standby (Call Ended)");
-
-      document.getElementById("btnStartCall").disabled = false;
-      document.getElementById("btnStartCall").classList.remove("opacity-50");
-      document.getElementById("btnEndCall").disabled = true;
-      document.getElementById("btnPushToTalk").disabled = true;
-      setAgentState("IDLE", "Call ended. Generating structured post-call summary...");
-      await refreshLiveSummary();
-      setAgentState("IDLE", "Call ended. Review transcript & JSON outcome on the right.");
-    }
-
-    async function refreshLiveSummary() {
-      if (transcript.length === 0) return;
-      try {
-        const res = await fetch("/api/summary", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transcript })
-        });
-        const summary = await res.json();
-        document.getElementById("summaryJsonBox").textContent = JSON.stringify(summary, null, 2);
-      } catch (e) {}
-    }
-
-    function toggleMicManual() {
-      stopCurrentAudio();
-      isAriaSpeaking = false;
-      turnDraft = "";
-      if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
-      setAgentState("LISTENING", "Interrupted — Listening to you now...");
-      updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-      stopRecognitionSafely();
-      setTimeout(startRecognitionSafely, 100);
-    }
-
-    function handleManualSubmit(e) {
-      e.preventDefault();
-      const input = document.getElementById("manualInput");
-      const val = input.value.trim();
-      if (!val) return;
-      input.value = "";
-      if (!callActive) {
-        callActive = true;
-        document.getElementById("btnStartCall").disabled = true;
-        document.getElementById("btnStartCall").classList.add("opacity-50");
-        document.getElementById("btnEndCall").disabled = false;
-        document.getElementById("btnPushToTalk").disabled = false;
-      }
-      sendUserTurn(val);
-    }
-
-    function simulatePrompt(text) {
-      if (!callActive) {
-        callActive = true;
-        document.getElementById("btnStartCall").disabled = true;
-        document.getElementById("btnStartCall").classList.add("opacity-50");
-        document.getElementById("btnEndCall").disabled = false;
-        document.getElementById("btnPushToTalk").disabled = false;
-      }
-      sendUserTurn(text);
     }
 
     async function resetDemoData() {
@@ -827,4 +1131,5 @@
     fetch("/api/orders").then(r => r.json()).then(d => renderOrdersTable(d.orders));
   </script>
 </body>
+
 </html>
