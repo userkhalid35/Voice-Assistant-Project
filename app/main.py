@@ -43,6 +43,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Aura Skincare Voice CX Agent", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "service": "Aura Skincare Voice CX Desk"}
+
 @app.get("/")
 async def index():
     return FileResponse("static/index.html")
@@ -89,5 +93,8 @@ async def create_call_summary(req: SummaryRequest):
     return await build_structured_summary(req.transcript)
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)
+

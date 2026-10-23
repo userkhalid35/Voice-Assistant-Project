@@ -14,6 +14,7 @@ Voice Assistant Project/
 ├── main.py
 ├── pyproject.toml
 ├── pyrightconfig.json
+├── render.yaml
 ├── static/
 │   └── index.html
 └── uv.lock

@@ -36,8 +36,25 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser to interact 
 ### 4. Run via Docker
 ```bash
 docker build -t aura-voice-agent .
-docker run -p 7860:7860 aura-voice-agent
+docker run -p 8000:8000 aura-voice-agent
 ```
+
+### 5. Deploy to Render (Free Tier)
+This repository is pre-configured with a root `Dockerfile` and `render.yaml` Blueprint for 1-click zero-cost hosting on Render's Free tier:
+1. Log in to [dashboard.render.com](https://dashboard.render.com).
+2. Click **New +** -> **Blueprint** (or **Web Service**).
+3. Connect your GitHub repository: `https://github.com/userkhalid35/Voice-Assistant-Project`.
+4. Choose the **Free** instance type.
+5. Set Health Check Path: `/health`.
+6. Add your optional API keys under **Environment Variables** (`GEMINI_API_KEY`, `GROQ_API_KEY`, `SARVAM_API_KEY`).
+7. Click **Create Web Service**.
+
+> [!NOTE]
+> **Render Free Tier Characteristics:**
+> - **Cold Start:** Free services spin down to sleep after 15 minutes of inactivity. The initial HTTP request after sleep takes ~45–50 seconds to boot up.
+> - **In-Memory Audio & State:** Aria uses in-memory pre-warming and audio caching. On cold boot, greetings are cached in memory within 0.8 seconds.
+> - **Health Check:** Monitored at `/health` returning HTTP 200 OK.
+
 
 ---
 
