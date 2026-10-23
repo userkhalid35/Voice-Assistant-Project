@@ -170,37 +170,38 @@
           </div>
           <div class="flex items-center gap-2 mb-2">
             <span id="micStatusDot" class="w-2.5 h-2.5 rounded-full bg-gray-400 transition-colors"></span>
-            <span id="micStatusText" class="text-[11px] text-[#5A625E] font-semibold">Mic: Standby (Click Start Call)</span>
+            <span id="micStatusText" class="text-[11px] text-[#5A625E] font-semibold">Mic: Standby (Click Start Listening)</span>
           </div>
           <p id="liveCaption" class="text-xs text-center text-[#5A625E] italic max-w-sm px-2 leading-relaxed">
-            Tap "Start Call" to talk naturally to Aria, or tap any prompt below.
+            Tap "Start Listening" to speak your question, then click "Resume Listening" to submit.
           </p>
         </div>
 
         <!-- Primary Voice Action Buttons (48px+ touch targets) -->
-        <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mb-3.5">
-          <button id="btnStartCall" onclick="startCall()"
-            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#233B30] hover:bg-[#1A2C24] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation">
-            <span class="text-xs">●</span> Start Call
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mb-2.5">
+          <button id="btnStartListening" onclick="handleStartListening()"
+            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#233B30] hover:bg-[#1A2C24] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation cursor-pointer">
+            <span class="text-xs">🎙️</span> Start Listening
           </button>
-          <button id="btnEndCall" onclick="endCall()" disabled
-            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation">
-            <span class="text-xs">■</span> End Call
+          <button id="btnResumeListening" onclick="handleResumeListening()" disabled
+            title="I have finished speaking. Process my question now."
+            class="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#E2D9C8] text-[#88908B] opacity-50 cursor-not-allowed transition flex items-center justify-center gap-2 shadow-sm touch-manipulation">
+            <span class="text-xs">✓</span> Resume Listening
           </button>
         </div>
 
-        <!-- Secondary Sub-Controls (Pause/Resume & Barge-In) -->
-        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E2D9C8]">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button id="btnPauseResume" onclick="togglePauseResume()" disabled
-              class="flex-1 sm:flex-none min-h-[44px] text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 disabled:opacity-40 transition flex items-center justify-center gap-1.5 touch-manipulation">
-              <span id="pauseResumeIcon">⏸️</span> <span id="pauseResumeText">Pause Listening</span>
-            </button>
-            <button id="btnPushToTalk" onclick="handleBargeIn()" disabled
-              class="flex-1 sm:flex-none min-h-[44px] text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 disabled:opacity-40 transition flex items-center justify-center gap-1 touch-manipulation">
-              🎙️ Interrupt
-            </button>
-          </div>
+        <!-- Secondary Controls (Interrupt Aria & End Call) -->
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mb-3.5">
+          <button id="btnInterrupt" onclick="handleInterrupt()" disabled
+            class="w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-1.5 touch-manipulation">
+            <span>🛑</span> Interrupt Aria
+          </button>
+          <button id="btnEndCall" onclick="handleEndCall()" disabled
+            class="w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#C86D51] hover:bg-[#B25B40] text-[#FAF7F2] disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition flex items-center justify-center gap-1.5 shadow-xs touch-manipulation">
+            <span>■</span> End Call
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
           <span id="toolIndicator"
             class="font-mono-code text-[11px] text-[#233B30] bg-[#E3ECE8] px-2.5 py-1 rounded hidden font-semibold"></span>
         </div>
@@ -224,7 +225,7 @@
         </div>
         <div id="transcriptList"
           class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-3 sm:p-4 overflow-y-auto space-y-3 max-h-[300px] sm:max-h-[350px]">
-          <p class="text-xs text-[#5A625E] text-center py-8 sm:py-10">No active conversation yet. Tap "Start Call" or send a message to view the transcript.</p>
+          <p class="text-xs text-[#5A625E] text-center py-8 sm:py-10">No active conversation yet. Tap "Start Listening" or send a message to view the transcript.</p>
         </div>
       </div>
     </section>
@@ -347,28 +348,23 @@
     // 1. GLOBAL STATE & SESSION LIFECYCLE MANAGEMENT
     // =========================================================================
     let callActive = false;
-    let isPaused = false;
+    let turnState = "IDLE"; // "IDLE" | "LISTENING" | "FINALIZING" | "SUBMITTING" | "SPEAKING" | "ERROR"
+    let requestInFlight = false;
     let languageMode = "hinglish"; // "hinglish" (hi-IN) | "english" (en-IN)
-    let agentState = "IDLE"; // IDLE | STARTING | LISTENING | RECOGNIZING | PROCESSING | SPEAKING | PAUSED | ERROR
     let transcript = [];
     let currentAudio = null;
-
-    // Speech Recognition State
-    let activeRecognizer = null;
-    let isRecognizing = false;
     let isAriaSpeaking = false;
     let sessionEpoch = 0; // Incremented on every session state transition to invalidate stale callbacks
 
-    // Real-Time Transcript Buffers (Google Voice Input Style)
-    let accumulatedFinalText = "";
-    let currentInterimText = "";
+    // Multi-Segment Accumulation Buffers (Preserves speech across Chrome restarts & pauses)
+    let sessionFinalizedSegments = [];
+    let currentFinalized = "";
+    let currentInterim = "";
+
+    let activeRecognizer = null;
     let silenceTimer = null;
     let recognitionRestartTimer = null;
     let ariaSafetyTimer = null;
-
-    // Silence detection thresholds
-    const SILENCE_AFTER_FINAL_MS = 850;   // Delay after Chrome confirms a finalized phrase
-    const SILENCE_AFTER_INTERIM_MS = 1300; // Delay while user may be pausing mid-sentence
 
     // Hardware AudioContext Visualizer
     let micStream = null;
@@ -378,8 +374,23 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+    // Helper: Combines all finalized segments and current interim text with normalized whitespace
+    function getFullTranscriptText() {
+      const parts = [];
+      for (const seg of sessionFinalizedSegments) {
+        if (seg && seg.trim()) parts.push(seg.trim());
+      }
+      if (currentFinalized && currentFinalized.trim()) {
+        parts.push(currentFinalized.trim());
+      }
+      if (currentInterim && currentInterim.trim()) {
+        parts.push(currentInterim.trim());
+      }
+      return parts.join(" ").replace(/\s+/g, " ").trim();
+    }
+
     // =========================================================================
-    // 2. UI STATUS & VISUAL FEEDBACK HELPERS
+    // 2. UI STATUS & BUTTON CONTROL HELPERS
     // =========================================================================
     function escapeHtml(str) {
       if (!str) return "";
@@ -392,10 +403,8 @@
       if (!dot || !label) return;
 
       label.textContent = labelText;
-      if (state === "active") {
+      if (state === "active" || state === "listening") {
         dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse transition-colors";
-      } else if (state === "listening") {
-        dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping transition-colors";
       } else if (state === "error") {
         dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 transition-colors";
       } else {
@@ -405,18 +414,22 @@
 
     function renderLiveCaption(finalText, interimText) {
       const caption = document.getElementById("liveCaption");
+      if (!caption) return;
+
       if (!finalText && !interimText) {
-        if (agentState === "LISTENING") {
-          caption.textContent = "Listening to you... speak naturally";
-        } else if (agentState === "PAUSED") {
-          caption.textContent = "Listening paused. Click 'Resume Listening' to speak.";
+        if (turnState === "LISTENING") {
+          caption.textContent = "Listening to you... speak your question, then click 'Resume Listening' to submit.";
+        } else if (turnState === "SPEAKING") {
+          // Keep current speaking caption
+        } else {
+          caption.textContent = "Click 'Start Listening' to speak your question, then click 'Resume Listening' to submit.";
         }
         return;
       }
 
       let html = "";
       if (finalText) {
-        html += `<span class="font-semibold text-[#1C2420]">${escapeHtml(finalText)}</span>`;
+        html += `<span class="font-bold text-[#1C2420]">${escapeHtml(finalText)}</span>`;
       }
       if (interimText) {
         html += ` <span class="text-[#C86D51] italic">${escapeHtml(interimText)}...</span>`;
@@ -425,14 +438,13 @@
     }
 
     function setAgentState(state, captionText) {
-      agentState = state;
       const badge = document.getElementById("stateBadge");
       const dot = document.getElementById("stateDot");
       const label = document.getElementById("stateLabel");
       const wave = document.getElementById("waveContainer");
       const caption = document.getElementById("liveCaption");
 
-      if (captionText) caption.textContent = captionText;
+      if (captionText && caption) caption.textContent = captionText;
 
       if (state === "LISTENING") {
         badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E3ECE8] text-[#233B30] border border-[#233B30]/30";
@@ -454,11 +466,6 @@
         dot.className = "w-2.5 h-2.5 rounded-full bg-[#C86D51] animate-pulse";
         label.textContent = "Speaking";
         wave.classList.add("wave-active");
-      } else if (state === "PAUSED") {
-        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F3EFE6] text-[#6B7280] border border-[#D5CBB8]";
-        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-        label.textContent = "Paused";
-        wave.classList.remove("wave-active");
       } else if (state === "ERROR") {
         badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300";
         dot.className = "w-2.5 h-2.5 rounded-full bg-rose-600";
@@ -480,20 +487,79 @@
       }
     }
 
-    function updatePauseResumeButton(isCurrentlyPaused) {
-      const btn = document.getElementById("btnPauseResume");
-      const icon = document.getElementById("pauseResumeIcon");
-      const label = document.getElementById("pauseResumeText");
-      if (!btn || !icon || !label) return;
+    function updateButtons() {
+      const btnStart = document.getElementById("btnStartListening") || document.getElementById("btnStartCall");
+      const btnResume = document.getElementById("btnResumeListening") || document.getElementById("btnPauseResume");
+      const btnInterrupt = document.getElementById("btnInterrupt") || document.getElementById("btnPushToTalk");
+      const btnEnd = document.getElementById("btnEndCall");
 
-      if (isCurrentlyPaused) {
-        icon.textContent = "▶️";
-        label.textContent = "Resume Listening";
-        btn.classList.add("bg-amber-100", "border-amber-300");
-      } else {
-        icon.textContent = "⏸️";
-        label.textContent = "Pause Listening";
-        btn.classList.remove("bg-amber-100", "border-amber-300");
+      if (turnState === "IDLE") {
+        if (btnStart) {
+          btnStart.disabled = false;
+          btnStart.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#233B30] hover:bg-[#1A2C24] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation cursor-pointer";
+        }
+        if (btnResume) {
+          btnResume.disabled = true;
+          btnResume.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#E2D9C8] text-[#88908B] opacity-50 cursor-not-allowed transition flex items-center justify-center gap-2 shadow-sm touch-manipulation";
+        }
+        if (btnInterrupt) {
+          btnInterrupt.disabled = true;
+          btnInterrupt.className = "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#FAF7F2] border border-[#E2D9C8] text-[#88908B] opacity-40 cursor-not-allowed transition flex items-center justify-center gap-1.5 touch-manipulation";
+        }
+        if (btnEnd) {
+          btnEnd.disabled = !callActive && transcript.length === 0;
+          btnEnd.className = btnEnd.disabled
+            ? "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#C86D51] text-[#FAF7F2] opacity-40 cursor-not-allowed transition flex items-center justify-center gap-1.5 shadow-xs touch-manipulation"
+            : "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#C86D51] hover:bg-[#B25B40] text-[#FAF7F2] cursor-pointer active:scale-98 transition flex items-center justify-center gap-1.5 shadow-xs touch-manipulation";
+        }
+      } else if (turnState === "LISTENING") {
+        if (btnStart) {
+          btnStart.disabled = true;
+          btnStart.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#E2D9C8] text-[#88908B] opacity-50 cursor-not-allowed transition flex items-center justify-center gap-2 shadow-sm touch-manipulation";
+        }
+        if (btnResume) {
+          // Highlighted: Process My Question Now
+          btnResume.disabled = false;
+          btnResume.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#C86D51] hover:bg-[#B25B40] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-md touch-manipulation cursor-pointer ring-2 ring-[#C86D51]/50";
+        }
+        if (btnInterrupt) {
+          btnInterrupt.disabled = true;
+        }
+        if (btnEnd) {
+          btnEnd.disabled = false;
+          btnEnd.className = "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#C86D51] hover:bg-[#B25B40] text-[#FAF7F2] cursor-pointer active:scale-98 transition flex items-center justify-center gap-1.5 shadow-xs touch-manipulation";
+        }
+      } else if (turnState === "FINALIZING" || turnState === "SUBMITTING") {
+        if (btnStart) btnStart.disabled = true;
+        if (btnResume) {
+          btnResume.disabled = true;
+          btnResume.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#E2D9C8] text-[#88908B] opacity-50 cursor-not-allowed transition flex items-center justify-center gap-2 shadow-sm touch-manipulation";
+        }
+        if (btnInterrupt) btnInterrupt.disabled = true;
+        if (btnEnd) btnEnd.disabled = false;
+      } else if (turnState === "SPEAKING") {
+        if (btnStart) {
+          // Clicking Start Listening while Aria is speaking acts as an interruption
+          btnStart.disabled = false;
+          btnStart.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#233B30] hover:bg-[#1A2C24] active:scale-98 text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm touch-manipulation cursor-pointer";
+        }
+        if (btnResume) {
+          btnResume.disabled = true;
+          btnResume.className = "w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm bg-[#E2D9C8] text-[#88908B] opacity-50 cursor-not-allowed transition flex items-center justify-center gap-2 shadow-sm touch-manipulation";
+        }
+        if (btnInterrupt) {
+          btnInterrupt.disabled = false;
+          btnInterrupt.className = "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] active:scale-95 cursor-pointer transition flex items-center justify-center gap-1.5 touch-manipulation";
+        }
+        if (btnEnd) {
+          btnEnd.disabled = false;
+          btnEnd.className = "w-full min-h-[44px] py-2.5 px-3 rounded-xl font-semibold text-xs bg-[#C86D51] hover:bg-[#B25B40] text-[#FAF7F2] cursor-pointer active:scale-98 transition flex items-center justify-center gap-1.5 shadow-xs touch-manipulation";
+        }
+      } else if (turnState === "ERROR") {
+        if (btnStart) btnStart.disabled = false;
+        if (btnResume) btnResume.disabled = true;
+        if (btnInterrupt) btnInterrupt.disabled = true;
+        if (btnEnd) btnEnd.disabled = false;
       }
     }
 
@@ -502,21 +568,21 @@
       const btnHi = document.getElementById("btnLangHinglish");
       const btnEn = document.getElementById("btnLangEnglish");
       if (mode === "hinglish") {
-        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
-        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+        btnHi.className = "min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition active:scale-95";
+        btnEn.className = "min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition active:scale-95";
       } else {
-        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
-        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+        btnEn.className = "min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition active:scale-95";
+        btnHi.className = "min-h-[38px] px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition active:scale-95";
       }
 
-      // If active and currently listening, refresh recognition with new locale immediately
-      if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
+      // If currently listening, refresh recognition session with new locale
+      if (callActive && turnState === "LISTENING" && !isAriaSpeaking && !requestInFlight) {
         startRecognitionSession();
       }
     }
 
     // =========================================================================
-    // 3. HARDWARE MICROPHONE & VU-METER VISUALIZER
+    // 3. HARDWARE MICROPHONE & AUDIO VISUALIZER
     // =========================================================================
     async function initMicrophone() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -550,7 +616,7 @@
       } catch (err) {
         console.error("Hardware mic access error:", err);
         updateMicBadge("error", "Mic Permission Blocked");
-        setAgentState("ERROR", "⚠️ Microphone permission blocked. Click the lock/camera icon in Chrome address bar to Allow.");
+        setAgentState("ERROR", "⚠️ Microphone permission blocked. Click the lock/camera icon in your address bar to Allow.");
         return false;
       }
     }
@@ -564,7 +630,7 @@
 
       function loop() {
         visualizerFrameId = requestAnimationFrame(loop);
-        if (!analyser || isAriaSpeaking || isPaused) {
+        if (!analyser || isAriaSpeaking || turnState !== "LISTENING") {
           waveBars.forEach(b => { b.style.transform = "scaleY(0.25)"; });
           return;
         }
@@ -576,10 +642,15 @@
         }
         const avg = sum / dataArray.length;
 
-        if (avg > 14) {
-          updateMicBadge("active", `🎙️ Voice detected (${Math.round(avg)}%)`);
-        } else if (callActive && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
-          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+        if (turnState === "LISTENING") {
+          const text = getFullTranscriptText();
+          if (text) {
+            updateMicBadge("listening", `🎙️ Transcribing: "${text.slice(-24)}"`);
+          } else if (avg > 14) {
+            updateMicBadge("active", "🎙️ Listening... Speech detected");
+          } else {
+            updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+          }
         }
 
         waveBars.forEach((bar, idx) => {
@@ -592,7 +663,7 @@
     }
 
     // =========================================================================
-    // 4. SPEECH RECOGNITION CONTROLLER (GOOGLE VOICE INPUT LIFECYCLE)
+    // 4. SPEECH RECOGNITION CONTROLLER & TURN ACCUMULATION
     // =========================================================================
     function stopRecognitionSession() {
       if (silenceTimer) {
@@ -615,104 +686,106 @@
         }
         activeRecognizer = null;
       }
-      isRecognizing = false;
     }
 
-    function scheduleRecognitionRestart(delay = 150) {
+    function scheduleRecognitionRestart(delay = 200) {
       if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
       recognitionRestartTimer = setTimeout(() => {
-        if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
+        if (callActive && turnState === "LISTENING" && !isAriaSpeaking && !requestInFlight) {
           startRecognitionSession();
         }
       }, delay);
     }
 
     function startRecognitionSession() {
-      if (!callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING" || agentState === "SPEAKING") {
+      if (!callActive || turnState !== "LISTENING" || isAriaSpeaking || requestInFlight) {
         return;
       }
 
       if (!SpeechRecognition) {
         updateMicBadge("error", "Web Speech API not supported");
-        setAgentState("ERROR", "Web Speech API is not supported in this browser. Please use Chrome or Edge.");
+        setAgentState("ERROR", "Web Speech API is not supported in this browser. Please use Chrome or Edge, or type in the text box below.");
+        turnState = "ERROR";
+        updateButtons();
         return;
       }
 
-      // 1. Cleanly tear down any prior instance & bump epoch
+      // Preserve any finalized segment before tearing down
+      if (currentFinalized && currentFinalized.trim()) {
+        sessionFinalizedSegments.push(currentFinalized.trim());
+        currentFinalized = "";
+      }
+      currentInterim = "";
+
       stopRecognitionSession();
-      sessionEpoch++;
       const thisEpoch = sessionEpoch;
 
-      // Reset buffers for fresh turn
-      accumulatedFinalText = "";
-      currentInterimText = "";
-
-      // 2. Instantiate fresh SpeechRecognition instance
       const rec = new SpeechRecognition();
       activeRecognizer = rec;
       rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
-
-      // In Hinglish mode, en-IN provides superior transcription for mixed Indian English,
-      // order IDs (ORD-101), and brand terms, while hi-IN supports Hindi speech.
       rec.lang = (languageMode === "hinglish") ? "hi-IN" : "en-IN";
 
       rec.onstart = () => {
         if (thisEpoch !== sessionEpoch) return;
-        isRecognizing = true;
-        if (callActive && !isAriaSpeaking && !isPaused && agentState !== "PROCESSING") {
-          setAgentState("LISTENING", "Listening to you... speak naturally");
+        if (turnState === "LISTENING") {
+          setAgentState("LISTENING", "Listening to you... speak your question, then click 'Resume Listening'.");
           updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+          const existingText = getFullTranscriptText();
+          renderLiveCaption(existingText, "");
         }
       };
 
       rec.onresult = (event) => {
-        if (thisEpoch !== sessionEpoch || !callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING") {
+        if (thisEpoch !== sessionEpoch || turnState !== "LISTENING" || isAriaSpeaking || requestInFlight) {
           return;
         }
 
-        currentInterimText = "";
-        let latestChunkIsFinal = false;
+        currentFinalized = "";
+        currentInterim = "";
 
-        // Process every changed result chunk via event.resultIndex
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const chunk = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            accumulatedFinalText += (accumulatedFinalText ? " " : "") + chunk.trim();
-            latestChunkIsFinal = true;
+        // Process all results from the current recognizer session
+        for (let i = 0; i < event.results.length; ++i) {
+          const res = event.results[i];
+          const text = res[0].transcript;
+          if (res.isFinal) {
+            currentFinalized += (currentFinalized ? " " : "") + text.trim();
           } else {
-            currentInterimText += (currentInterimText ? " " : "") + chunk.trim();
+            currentInterim += (currentInterim ? " " : "") + text.trim();
           }
         }
 
-        const fullSpokenText = (accumulatedFinalText + " " + currentInterimText).trim();
-        if (!fullSpokenText) return;
+        const totalFinalSoFar = [
+          ...sessionFinalizedSegments,
+          ...(currentFinalized ? [currentFinalized] : [])
+        ].join(" ").trim();
 
-        // Transition agent state to RECOGNIZING
-        if (agentState !== "RECOGNIZING") {
-          setAgentState("RECOGNIZING", null);
+        // Render live words in high-contrast (Bold for finalized, Italic for interim)
+        renderLiveCaption(totalFinalSoFar, currentInterim);
+
+        const fullCurrent = getFullTranscriptText();
+        if (fullCurrent) {
+          updateMicBadge("listening", `🎙️ Transcribing: "${fullCurrent.slice(-24)}"`);
         }
 
-        // Live real-time visual feedback (Google Voice Input Style)
-        renderLiveCaption(accumulatedFinalText, currentInterimText);
-        updateMicBadge("active", `🎙️ Transcribing: "${fullSpokenText.slice(-25)}"`);
-
-        // Reset silence commit timer
+        // Generous automatic silence commit timer (2.8s) if user pauses without pressing button
         if (silenceTimer) clearTimeout(silenceTimer);
-        const timeoutMs = latestChunkIsFinal ? SILENCE_AFTER_FINAL_MS : SILENCE_AFTER_INTERIM_MS;
         silenceTimer = setTimeout(() => {
-          finalizeUserTurn(thisEpoch);
-        }, timeoutMs);
+          if (thisEpoch === sessionEpoch && turnState === "LISTENING" && !requestInFlight) {
+            const text = getFullTranscriptText();
+            if (text) {
+              handleResumeListening();
+            }
+          }
+        }, 2800);
       };
 
       rec.onerror = (event) => {
         if (thisEpoch !== sessionEpoch) return;
-        isRecognizing = false;
 
-        // no-speech is normal silence timeout in Chrome; do NOT treat as error or interrupt user
         if (event.error === "no-speech") {
-          return;
+          return; // Normal silence timeout in Chrome
         }
         if (event.error === "aborted") {
           return; // Normal programmatic stop
@@ -720,11 +793,15 @@
         if (event.error === "not-allowed" || event.error === "service-not-allowed") {
           updateMicBadge("error", "Mic Permission Blocked");
           setAgentState("ERROR", "⚠️ Microphone permission blocked. Click the lock icon in the address bar to Allow.");
+          turnState = "ERROR";
+          updateButtons();
           return;
         }
         if (event.error === "audio-capture") {
           updateMicBadge("error", "No Mic Hardware Found");
           setAgentState("ERROR", "⚠️ No microphone hardware detected. Please connect a microphone or use the text box below.");
+          turnState = "ERROR";
+          updateButtons();
           return;
         }
         if (event.error === "network") {
@@ -737,63 +814,25 @@
 
       rec.onend = () => {
         if (thisEpoch !== sessionEpoch) return;
-        isRecognizing = false;
 
-        // If in an unrecoverable error state, do not attempt to revive
-        if (agentState === "ERROR") {
-          return;
+        // Persist any finalized segment into sessionFinalizedSegments so it is NEVER lost!
+        if (currentFinalized && currentFinalized.trim()) {
+          sessionFinalizedSegments.push(currentFinalized.trim());
+          currentFinalized = "";
         }
+        currentInterim = "";
 
-        const bufferedText = (accumulatedFinalText + " " + currentInterimText).trim();
-        // If user was speaking and Chrome timed out on silence, commit immediately
-        if (bufferedText && callActive && !isAriaSpeaking && !isPaused && agentState !== "PROCESSING") {
-          finalizeUserTurn(thisEpoch);
-          return;
-        }
-
-        // If empty and we should still be listening, safely revive with bounded backoff
-        if (callActive && !isAriaSpeaking && !isPaused && (agentState === "LISTENING" || agentState === "RECOGNIZING")) {
-          scheduleRecognitionRestart(300);
+        // If turn is still listening, revive recognition cleanly
+        if (callActive && turnState === "LISTENING" && !isAriaSpeaking && !requestInFlight) {
+          scheduleRecognitionRestart(200);
         }
       };
 
       try {
         rec.start();
-        isRecognizing = true;
       } catch (err) {
-        isRecognizing = false;
-        scheduleRecognitionRestart(200);
+        scheduleRecognitionRestart(300);
       }
-    }
-
-    function finalizeUserTurn(epoch) {
-      if (epoch !== sessionEpoch) return;
-      if (!callActive || isAriaSpeaking || isPaused || agentState === "PROCESSING") return;
-
-      if (silenceTimer) {
-        clearTimeout(silenceTimer);
-        silenceTimer = null;
-      }
-
-      const fullText = (accumulatedFinalText + " " + currentInterimText).trim();
-
-      // NEVER submit an empty utterance to the backend!
-      if (!fullText) {
-        setAgentState("LISTENING", "Listening to you... speak naturally");
-        renderLiveCaption("", "");
-        return;
-      }
-
-      // Reset buffers immediately
-      accumulatedFinalText = "";
-      currentInterimText = "";
-
-      // Transition to PROCESSING
-      setAgentState("PROCESSING", `Processing: "${fullText}"`);
-      stopRecognitionSession();
-
-      // Submit valid turn to backend
-      sendUserTurn(fullText);
     }
 
     // =========================================================================
@@ -815,122 +854,192 @@
       }
     }
 
-    function finishAriaSpeaking() {
+    function finishAriaSpeaking(epoch) {
+      if (epoch !== sessionEpoch) return;
       if (ariaSafetyTimer) {
         clearTimeout(ariaSafetyTimer);
         ariaSafetyTimer = null;
       }
       currentAudio = null;
+      isAriaSpeaking = false;
 
-      // 350ms acoustic echo guard delay allows speaker sound to clear room before activating mic
-      setTimeout(() => {
-        isAriaSpeaking = false;
-        if (callActive && !isPaused) {
-          setAgentState("LISTENING", "Listening to you... speak naturally");
-          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-          startRecognitionSession();
-        } else if (!callActive) {
-          setAgentState("IDLE", "Call ended.");
-        }
-      }, 350);
+      // Turn is complete! Wait for next user action.
+      turnState = "IDLE";
+      setAgentState("IDLE", "Answer completed. Click 'Start Listening' to ask your next question.");
+      updateMicBadge("standby", "Mic: Standby");
+      renderLiveCaption("", "");
+      updateButtons();
     }
 
-    function playAgentAudio(base64Data, mimeType, fallbackText) {
+    function playAgentAudio(base64Data, mimeType, fallbackText, epoch) {
       stopCurrentAudio();
       stopRecognitionSession();
       isAriaSpeaking = true;
       setAgentState("SPEAKING", `Aria: "${fallbackText}"`);
       updateMicBadge("standby", "Aria Speaking (Mic Muted)");
 
-      // Generous fail-safe safety timeout: proportional to text length (never cuts off legitimate speech)
       const maxSeconds = Math.max(12, Math.ceil(fallbackText.length / 5));
       if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
       ariaSafetyTimer = setTimeout(() => {
-        if (isAriaSpeaking) {
-          finishAriaSpeaking();
+        if (isAriaSpeaking && epoch === sessionEpoch) {
+          finishAriaSpeaking(epoch);
         }
       }, maxSeconds * 1000);
 
       if (base64Data) {
         currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
-        currentAudio.onended = () => finishAriaSpeaking();
-        currentAudio.onerror = () => speakBrowserFallback(fallbackText);
-        currentAudio.play().catch(() => speakBrowserFallback(fallbackText));
+        currentAudio.onended = () => finishAriaSpeaking(epoch);
+        currentAudio.onerror = () => speakBrowserFallback(fallbackText, epoch);
+        currentAudio.play().catch(() => speakBrowserFallback(fallbackText, epoch));
       } else {
-        speakBrowserFallback(fallbackText);
+        speakBrowserFallback(fallbackText, epoch);
       }
     }
 
-    function speakBrowserFallback(text) {
+    function speakBrowserFallback(text, epoch) {
       if (!window.speechSynthesis) {
-        finishAriaSpeaking();
+        finishAriaSpeaking(epoch);
         return;
       }
       isAriaSpeaking = true;
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = languageMode === "hinglish" ? "hi-IN" : "en-IN";
       utter.rate = 1.02;
-      utter.onend = () => finishAriaSpeaking();
-      utter.onerror = () => finishAriaSpeaking();
+      utter.onend = () => finishAriaSpeaking(epoch);
+      utter.onerror = () => finishAriaSpeaking(epoch);
       window.speechSynthesis.speak(utter);
     }
 
     // =========================================================================
-    // 6. CALL FLOW CONTROLS (START, END, PAUSE, BARGE-IN)
+    // 6. TURN LIFECYCLE CONTROLS (START, RESUME/PROCESS, INTERRUPT, END)
     // =========================================================================
-    async function startCall() {
-      callActive = true;
-      isPaused = false;
-      transcript = [];
-      accumulatedFinalText = "";
-      currentInterimText = "";
-      renderTranscript();
-
-      document.getElementById("btnStartCall").disabled = true;
-      document.getElementById("btnStartCall").classList.add("opacity-50");
-      document.getElementById("btnEndCall").disabled = false;
-      document.getElementById("btnPauseResume").disabled = false;
-      document.getElementById("btnPushToTalk").disabled = false;
-      updatePauseResumeButton(false);
-
-      // 1. Initialize hardware microphone stream & visualizer immediately
-      await initMicrophone();
-
-      // 2. Play greeting and start conversational loop
-      setAgentState("STARTING", "Connecting to Aria...");
-      try {
-        const res = await fetch(`/api/greeting?language_mode=${languageMode}`);
-        const data = await res.json();
-        renderOrdersTable(data.orders);
-        transcript.push({ role: "assistant", text: data.reply_text, timestamp: new Date().toLocaleTimeString() });
-        renderTranscript();
-        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
-      } catch (err) {
-        setAgentState("LISTENING", "Connected. Speak now.");
-        startRecognitionSession();
+    async function handleStartListening() {
+      // If Aria is speaking, clicking Start Listening acts as an interruption!
+      if (isAriaSpeaking) {
+        stopCurrentAudio();
       }
+
+      if (turnState === "LISTENING" || turnState === "FINALIZING" || turnState === "SUBMITTING") {
+        return;
+      }
+
+      sessionEpoch++;
+      sessionFinalizedSegments = [];
+      currentFinalized = "";
+      currentInterim = "";
+
+      turnState = "LISTENING";
+      callActive = true;
+      updateButtons();
+
+      if (!micStream) {
+        setAgentState("STARTING", "Requesting microphone access...");
+        const ok = await initMicrophone();
+        if (!ok) {
+          turnState = "ERROR";
+          updateButtons();
+          return;
+        }
+      }
+
+      setAgentState("LISTENING", "Listening to you... speak your question, then click 'Resume Listening'.");
+      updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+      renderLiveCaption("", "");
+
+      startRecognitionSession();
     }
 
-    async function sendUserTurn(userText) {
-      if (!userText || !userText.trim()) return;
-      stopCurrentAudio();
-      stopRecognitionSession();
+    async function handleResumeListening() {
+      // Resume Listening Semantics: "I have finished speaking. Process my question now."
+      if (turnState !== "LISTENING" || requestInFlight) {
+        return;
+      }
 
-      transcript.push({ role: "user", text: userText, timestamp: new Date().toLocaleTimeString() });
+      turnState = "FINALIZING";
+      setAgentState("PROCESSING", "Finalizing your speech...");
+      updateButtons();
+
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+      if (recognitionRestartTimer) {
+        clearTimeout(recognitionRestartTimer);
+        recognitionRestartTimer = null;
+      }
+
+      // Stop recognition so browser flushes any trailing speech chunk
+      if (activeRecognizer) {
+        try {
+          activeRecognizer.stop();
+        } catch (e) {
+          try { activeRecognizer.abort(); } catch (_) { }
+        }
+      }
+
+      // Brief delay to allow pending onresult/onend events to process
+      await new Promise(r => setTimeout(r, 180));
+
+      const finalQuery = getFullTranscriptText();
+
+      // Guard: empty transcript check
+      if (!finalQuery) {
+        turnState = "IDLE";
+        setAgentState("IDLE", "⚠️ No speech captured. Please click 'Start Listening' and speak, or type your question below.");
+        renderLiveCaption("", "");
+        updateButtons();
+        return;
+      }
+
+      stopRecognitionSession();
+      await executeVoiceTurn(finalQuery);
+    }
+
+    async function executeVoiceTurn(queryText) {
+      if (requestInFlight) return;
+      requestInFlight = true;
+      turnState = "SUBMITTING";
+
+      const thisTurnEpoch = sessionEpoch;
+
+      // Safely clear draft buffers
+      sessionFinalizedSegments = [];
+      currentFinalized = "";
+      currentInterim = "";
+
+      // Add user turn to conversation history
+      transcript.push({
+        role: "user",
+        text: queryText,
+        timestamp: new Date().toLocaleTimeString()
+      });
       renderTranscript();
-      setAgentState("PROCESSING", `Processing: "${userText}"`);
+      setAgentState("PROCESSING", `Processing: "${queryText}"`);
+      renderLiveCaption(queryText, "");
+      updateButtons();
 
       try {
         const res = await fetch("/api/voice-turn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_text: userText,
+            user_text: queryText,
             history: transcript.slice(0, -1),
             language_mode: languageMode
           })
         });
+
+        if (!res.ok) {
+          throw new Error(`Server returned HTTP ${res.status}`);
+        }
+
         const data = await res.json();
+
+        // Stale check: discard response if user ended call while request was in-flight
+        if (thisTurnEpoch !== sessionEpoch) {
+          return;
+        }
+
         renderOrdersTable(data.orders);
 
         const toolBadge = document.getElementById("toolIndicator");
@@ -948,80 +1057,62 @@
           tool_used: data.tool_used
         });
         renderTranscript();
-        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
         refreshLiveSummary();
-      } catch (e) {
-        setAgentState("LISTENING", "Ready for next question.");
-        startRecognitionSession();
+
+        turnState = "SPEAKING";
+        updateButtons();
+        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text, thisTurnEpoch);
+
+      } catch (err) {
+        console.error("Voice turn error:", err);
+        if (thisTurnEpoch === sessionEpoch) {
+          turnState = "IDLE";
+          setAgentState("IDLE", "An error occurred while connecting to Aria. Please try again.");
+          updateButtons();
+        }
+      } finally {
+        requestInFlight = false;
       }
     }
 
-    async function endCall() {
+    function handleInterrupt() {
+      stopCurrentAudio();
+      isAriaSpeaking = false;
+      handleStartListening();
+    }
+
+    function handleEndCall() {
       callActive = false;
-      isPaused = false;
-      sessionEpoch++; // Invalidate all pending session callbacks immediately
+      turnState = "IDLE";
+      requestInFlight = false;
+      sessionEpoch++; // Invalidates ALL pending callbacks, requests, timers
 
       stopCurrentAudio();
       stopRecognitionSession();
-
-      if (silenceTimer) clearTimeout(silenceTimer);
-      if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
-      if (visualizerFrameId) cancelAnimationFrame(visualizerFrameId);
 
       if (micStream) {
         micStream.getTracks().forEach(t => t.stop());
         micStream = null;
       }
-      accumulatedFinalText = "";
-      currentInterimText = "";
-      updateMicBadge("standby", "Mic: Standby (Call Ended)");
-
-      document.getElementById("btnStartCall").disabled = false;
-      document.getElementById("btnStartCall").classList.remove("opacity-50");
-      document.getElementById("btnEndCall").disabled = true;
-      document.getElementById("btnPauseResume").disabled = true;
-      document.getElementById("btnPushToTalk").disabled = true;
-      updatePauseResumeButton(false);
-
-      setAgentState("IDLE", "Call ended. Generating structured post-call summary...");
-      await refreshLiveSummary();
-      setAgentState("IDLE", "Call ended. Review transcript & JSON outcome on the right.");
-    }
-
-    function togglePauseResume() {
-      if (!callActive) return;
-
-      if (!isPaused) {
-        // PAUSE listening
-        isPaused = true;
-        stopCurrentAudio();
-        stopRecognitionSession();
-        setAgentState("PAUSED", "Listening Paused — Click 'Resume Listening' to speak");
-        updateMicBadge("standby", "Mic Paused");
-        updatePauseResumeButton(true);
-      } else {
-        // RESUME listening
-        isPaused = false;
-        setAgentState("LISTENING", "Listening to you... speak naturally");
-        updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-        updatePauseResumeButton(false);
-        startRecognitionSession();
+      if (visualizerFrameId) {
+        cancelAnimationFrame(visualizerFrameId);
+        visualizerFrameId = null;
       }
-    }
+      if (audioCtx && audioCtx.state !== "closed") {
+        try { audioCtx.close(); } catch (_) { }
+        audioCtx = null;
+      }
 
-    function handleBargeIn() {
-      if (!callActive) return;
-      stopCurrentAudio();
-      isAriaSpeaking = false;
-      isPaused = false;
-      accumulatedFinalText = "";
-      currentInterimText = "";
-      if (silenceTimer) clearTimeout(silenceTimer);
-      setAgentState("LISTENING", "Interrupted — Listening to you now...");
-      updateMicBadge("listening", "🎙️ Listening... Speak naturally");
-      document.getElementById("btnPauseResume").disabled = false;
-      updatePauseResumeButton(false);
-      startRecognitionSession();
+      sessionFinalizedSegments = [];
+      currentFinalized = "";
+      currentInterim = "";
+
+      setAgentState("IDLE", "Call ended. Tap 'Start Listening' to start a new question.");
+      updateMicBadge("standby", "Mic: Standby");
+      renderLiveCaption("", "");
+      updateButtons();
+
+      refreshLiveSummary();
     }
 
     function handleManualSubmit(e) {
@@ -1030,27 +1121,24 @@
       const val = input.value.trim();
       if (!val) return;
       input.value = "";
-      if (!callActive) {
-        callActive = true;
-        document.getElementById("btnStartCall").disabled = true;
-        document.getElementById("btnStartCall").classList.add("opacity-50");
-        document.getElementById("btnEndCall").disabled = false;
-        document.getElementById("btnPauseResume").disabled = false;
-        document.getElementById("btnPushToTalk").disabled = false;
+
+      if (isAriaSpeaking) {
+        stopCurrentAudio();
       }
-      sendUserTurn(val);
+      stopRecognitionSession();
+
+      callActive = true;
+      executeVoiceTurn(val);
     }
 
     function simulatePrompt(text) {
-      if (!callActive) {
-        callActive = true;
-        document.getElementById("btnStartCall").disabled = true;
-        document.getElementById("btnStartCall").classList.add("opacity-50");
-        document.getElementById("btnEndCall").disabled = false;
-        document.getElementById("btnPauseResume").disabled = false;
-        document.getElementById("btnPushToTalk").disabled = false;
+      if (isAriaSpeaking) {
+        stopCurrentAudio();
       }
-      sendUserTurn(text);
+      stopRecognitionSession();
+
+      callActive = true;
+      executeVoiceTurn(text);
     }
 
     // =========================================================================
@@ -1071,6 +1159,7 @@
 
     function renderOrdersTable(orders) {
       const tbody = document.getElementById("ordersTableBody");
+      if (!tbody) return;
       tbody.innerHTML = orders.map(o => {
         let badgeStyle = "bg-[#FEF3C7] text-[#92400E]";
         if (o.status === "Out for Delivery") badgeStyle = "bg-[#E0F2FE] text-[#075985]";
@@ -1094,9 +1183,12 @@
 
     function renderTranscript() {
       const box = document.getElementById("transcriptList");
-      document.getElementById("turnCounter").textContent = `${transcript.length} turns`;
+      const turnCounter = document.getElementById("turnCounter");
+      if (turnCounter) turnCounter.textContent = `${transcript.length} turns`;
+      if (!box) return;
+
       if (transcript.length === 0) {
-        box.innerHTML = `<p class="text-xs text-[#5A625E] text-center py-10">No active conversation yet. Start a call to view the live chronological transcript.</p>`;
+        box.innerHTML = `<p class="text-xs text-[#5A625E] text-center py-8 sm:py-10">No active conversation yet. Tap "Start Listening" or send a message to begin.</p>`;
         return;
       }
       box.innerHTML = transcript.map(t => {
@@ -1127,8 +1219,30 @@
       navigator.clipboard.writeText(text);
     }
 
+    // Global API & State inspection aliases for testing & accessibility
+    window.handleStartListening = handleStartListening;
+    window.handleResumeListening = handleResumeListening;
+    window.handleInterrupt = handleInterrupt;
+    window.handleEndCall = handleEndCall;
+    window.handleManualSubmit = handleManualSubmit;
+    window.setLanguageMode = setLanguageMode;
+    window.finishAriaSpeaking = finishAriaSpeaking;
+    window.executeVoiceTurn = executeVoiceTurn;
+    window.startCall = handleStartListening;
+    window.endCall = handleEndCall;
+    window.togglePauseResume = handleResumeListening;
+    window.handleBargeIn = handleInterrupt;
+
+    window.getTurnState = () => turnState;
+    window.getTranscript = () => transcript;
+    window.getSessionFinalizedSegments = () => sessionFinalizedSegments;
+    window.getSessionEpoch = () => sessionEpoch;
+    window.getIsAriaSpeaking = () => isAriaSpeaking;
+    window.getCallActive = () => callActive;
+
     // Load initial orders on page load
     fetch("/api/orders").then(r => r.json()).then(d => renderOrdersTable(d.orders));
+    updateButtons();
   </script>
 </body>
 
