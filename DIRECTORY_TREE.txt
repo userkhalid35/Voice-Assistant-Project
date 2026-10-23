@@ -1,0 +1,19 @@
+Voice Assistant Project/
+├── .env.example
+├── .gitignore
+├── .python-version
+├── Dockerfile
+├── README.md
+├── SPEC.md
+├── TASKS.md
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models_and_data.py
+│   └── tools_and_voice.py
+├── main.py
+├── pyproject.toml
+├── pyrightconfig.json
+├── static/
+│   └── index.html
+└── uv.lock

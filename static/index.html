@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura Skincare — Voice Concierge Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-linen: #FAF7F2;
+      --bg-oat: #F3EFE6;
+      --border-stone: #E2D9C8;
+      --forest: #233B30;
+      --terracotta: #C86D51;
+      --charcoal: #1C2420;
+    }
+    body {
+      background-color: var(--bg-linen);
+      color: var(--charcoal);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-serif-editorial { font-family: 'Cormorant Garamond', serif; }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+    @keyframes wavePulse {
+      0%, 100% { transform: scaleY(0.25); }
+      50% { transform: scaleY(1); }
+    }
+    .wave-bar {
+      width: 4px;
+      height: 28px;
+      background-color: var(--terracotta);
+      border-radius: 99px;
+      transform: scaleY(0.25);
+      transition: transform 0.1s ease;
+      transform-origin: bottom;
+    }
+    .wave-active .wave-bar {
+      animation: wavePulse 0.85s ease-in-out infinite;
+    }
+    .wave-active .wave-bar:nth-child(2) { animation-delay: 0.12s; }
+    .wave-active .wave-bar:nth-child(3) { animation-delay: 0.24s; }
+    .wave-active .wave-bar:nth-child(4) { animation-delay: 0.36s; }
+    .wave-active .wave-bar:nth-child(5) { animation-delay: 0.18s; }
+    .wave-active .wave-bar:nth-child(6) { animation-delay: 0.30s; }
+    .wave-active .wave-bar:nth-child(7) { animation-delay: 0.10s; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Top Botanical Brand Header -->
+  <header class="border-b border-[#E2D9C8] bg-[#FAF7F2]/90 sticky top-0 z-20 backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-[#233B30] text-[#FAF7F2] flex items-center justify-center font-serif-editorial text-2xl font-bold tracking-wider">
+          A
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="font-serif-editorial text-2xl md:text-3xl font-bold tracking-tight text-[#1C2420]">AURA SKINCARE</h1>
+            <span class="text-[11px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#E8E2D5] text-[#233B30] font-semibold">Botanical CX Desk</span>
+          </div>
+          <p class="text-xs text-[#5A625E]">Aria — Real-Time Voice Support Specialist (Hinglish & Indian English)</p>
+        </div>
+      </div>
+
+      <!-- Language Mode Toggle -->
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium text-[#5A625E]">Voice Mode:</span>
+        <div class="inline-flex rounded-full p-1 bg-[#F3EFE6] border border-[#E2D9C8]">
+          <button id="btnLangHinglish" onclick="setLanguageMode('hinglish')" class="px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition">
+            Hinglish (Default)
+          </button>
+          <button id="btnLangEnglish" onclick="setLanguageMode('english')" class="px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition">
+            Indian English
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main 2-Column Studio Workbench -->
+  <main class="max-w-7xl mx-auto w-full px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+    <!-- Left Column: Voice Call Console & Live Transcript (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+      <!-- Call Control Card -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <span class="text-[11px] uppercase tracking-widest text-[#5A625E] font-semibold">Specialist on Duty</span>
+            <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Aria — Order & Policy Desk</h2>
+          </div>
+          <!-- Live State Indicator Badge -->
+          <div id="stateBadge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]">
+            <span id="stateDot" class="w-2.5 h-2.5 rounded-full bg-[#6B7280]"></span>
+            <span id="stateLabel">Idle — Ready</span>
+          </div>
+        </div>
+
+        <!-- Organic Terracotta Audio Waveform Visualizer -->
+        <div class="bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-5 mb-5 flex flex-col items-center justify-center min-h-[140px]">
+          <div id="waveContainer" class="flex items-center gap-2 mb-2">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <span id="micStatusDot" class="w-2.5 h-2.5 rounded-full bg-gray-400 transition-colors"></span>
+            <span id="micStatusText" class="text-[11px] text-[#5A625E] font-medium">Mic: Standby (Click Start Call)</span>
+          </div>
+          <p id="liveCaption" class="text-xs text-center text-[#5A625E] italic max-w-sm">
+            Click "Start Call" and speak naturally into your microphone, or click any quick prompt on the right.
+          </p>
+        </div>
+
+        <!-- Start / End Call + Barge-in Controls -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <button id="btnStartCall" onclick="startCall()" class="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-[#233B30] hover:bg-[#1A2C24] text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm">
+            <span>●</span> Start Call
+          </button>
+          <button id="btnEndCall" onclick="endCall()" disabled class="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none text-[#FAF7F2] transition flex items-center justify-center gap-2">
+            <span>■</span> End Call
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#E2D9C8]">
+          <button id="btnPushToTalk" onclick="toggleMicManual()" disabled class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] text-[#1C2420] hover:bg-[#E8E2D5] disabled:opacity-40 transition">
+            🎙️ Tap to Speak / Interrupt (Barge-In)
+          </button>
+          <span id="toolIndicator" class="font-mono-code text-[11px] text-[#233B30] bg-[#E3ECE8] px-2.5 py-1 rounded hidden"></span>
+        </div>
+
+        <!-- Manual Text Input Bar (For quiet environments or instant testing) -->
+        <form onsubmit="handleManualSubmit(event)" class="mt-4 flex gap-2">
+          <input id="manualInput" type="text" placeholder="Or type a message to Aria (e.g., Where is ORD-101?)..." class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#233B30]" />
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-[#233B30] text-[#FAF7F2] hover:bg-[#1A2C24] transition">
+            Send
+          </button>
+        </form>
+      </div>
+
+      <!-- Chronological Call Transcript Card -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-5 flex-1 flex flex-col min-h-[290px]">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-serif-editorial text-xl font-bold text-[#1C2420]">Live Call Transcript</h3>
+          <span id="turnCounter" class="text-xs font-mono-code text-[#5A625E]">0 turns</span>
+        </div>
+        <div id="transcriptList" class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-4 overflow-y-auto space-y-3 max-h-[340px]">
+          <p class="text-xs text-[#5A625E] text-center py-10">No active conversation yet. Start a call to view the live chronological transcript.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Evaluator Helper Table, Quick Scenarios & Post-Call JSON (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-5">
+      <!-- Live Test Orders Helper Card (Requirement 2E) -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="text-[11px] uppercase tracking-widest text-[#C86D51] font-bold">Evaluator Helper Panel</span>
+            <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Live Mock Order Database</h2>
+          </div>
+          <button onclick="resetDemoData()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] text-[#1C2420] transition">
+            ↺ Reset Demo Orders
+          </button>
+        </div>
+
+        <div class="overflow-x-auto bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-[#E2D9C8] bg-[#EFEAE0] text-[#5A625E] uppercase tracking-wider text-[10px]">
+                <th class="py-2.5 px-3">Order ID</th>
+                <th class="py-2.5 px-3">Customer</th>
+                <th class="py-2.5 px-3">Product</th>
+                <th class="py-2.5 px-3">Value</th>
+                <th class="py-2.5 px-3">Live Status</th>
+                <th class="py-2.5 px-3">Notes / Policy Eligibility</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody" class="divide-y divide-[#E2D9C8]"></tbody>
+          </table>
+        </div>
+
+        <!-- One-Click Evaluator Voice Test Scenarios -->
+        <div class="mt-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-[#5A625E] mb-2">
+            One-Click Evaluator Test Prompts (Simulates Speaking to Aria):
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="simulatePrompt('Mera order ORD-101 kahan pahuncha hai?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              📦 Track ORD-101 (Hinglish)
+            </button>
+            <button onclick="simulatePrompt('Please cancel my order ORD-103 right now.')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              ✕ Cancel ORD-103 (Allowed)
+            </button>
+            <button onclick="simulatePrompt('Can you cancel my order ORD-101?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              🚫 Cancel ORD-101 (Policy Block)
+            </button>
+            <button onclick="simulatePrompt('I bought ORD-102 14 days ago and opened it. Can I return it?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              🛡️ Return Opened/14d Product (Policy Block)
+            </button>
+            <button onclick="simulatePrompt('Where is my order ORD-999?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              ❓ Invalid Order ID (ORD-999)
+            </button>
+            <button onclick="simulatePrompt('Can you book me a flight to Goa this weekend?')" class="text-xs px-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#D5CBB8] hover:border-[#233B30] transition">
+              ✈️ Out-of-Scope (Flight to Goa)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand Policy Quick Reference Card -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
+          <p class="font-bold text-[#233B30] mb-1">Shipping</p>
+          <p class="text-[#5A625E]">Free &gt; ₹499 (₹50 below). 3–5 business days.</p>
+        </div>
+        <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
+          <p class="font-bold text-[#233B30] mb-1">Returns</p>
+          <p class="text-[#5A625E]">7 days, unopened &amp; unused only. 48h w/ photo for damage.</p>
+        </div>
+        <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
+          <p class="font-bold text-[#233B30] mb-1">Cancellations</p>
+          <p class="text-[#5A625E]">Only while <code>Processing</code>. Refuse at doorstep if shipped.</p>
+        </div>
+        <div class="bg-[#FAF7F2] p-3 rounded-xl border border-[#E2D9C8]">
+          <p class="font-bold text-[#233B30] mb-1">Cash on Delivery</p>
+          <p class="text-[#5A625E]">Available up to ₹2,500 via Cash or UPI at doorstep.</p>
+        </div>
+      </div>
+
+      <!-- Post-Call Structured JSON Summary Card (Requirement 2D) -->
+      <div class="bg-[#F3EFE6] border border-[#E2D9C8] rounded-2xl p-6 flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <span class="text-[11px] uppercase tracking-widest text-[#233B30] font-bold">Post-Call Outcome (Requirement 2D)</span>
+            <h3 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Structured Call Summary (JSON)</h3>
+          </div>
+          <button onclick="copySummaryJson()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] transition">
+            Copy JSON
+          </button>
+        </div>
+        <pre id="summaryJsonBox" class="flex-1 bg-[#1C2420] text-[#E8E2D5] font-mono-code text-xs p-4 rounded-xl overflow-x-auto leading-relaxed">{
+  "status": "End the call or run a test scenario to generate the structured JSON call outcome."
+}</pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Global Conversation & Audio State
+    let callActive = false;
+    let languageMode = "hinglish";
+    let agentState = "IDLE"; // IDLE | LISTENING | THINKING | SPEAKING
+    let transcript = [];
+    let currentAudio = null;
+
+    // Speech Recognition & Silence Debouncing State
+    let recognition = null;
+    let isRecognizing = false;
+    let isAriaSpeaking = false;
+    let turnDraft = "";
+    let silenceCommitTimer = null;
+    let recognitionRestartTimer = null;
+    let ariaSafetyTimer = null;
+
+    // Hardware AudioContext Visualizer
+    let micStream = null;
+    let audioCtx = null;
+    let analyser = null;
+    let visualizerFrameId = null;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function updateMicBadge(state, labelText) {
+      const dot = document.getElementById("micStatusDot");
+      const label = document.getElementById("micStatusText");
+      if (!dot || !label) return;
+
+      label.textContent = labelText;
+      if (state === "active") {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse transition-colors";
+      } else if (state === "listening") {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping transition-colors";
+      } else if (state === "error") {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 transition-colors";
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-gray-400 transition-colors";
+      }
+    }
+
+    async function initMicrophone() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        updateMicBadge("error", "Mic API not supported");
+        return false;
+      }
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          }
+        });
+
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.4;
+        const source = audioCtx.createMediaStreamSource(micStream);
+        source.connect(analyser);
+
+        updateMicBadge("active", "Mic Live & Ready");
+        startWaveformVisualizer();
+        return true;
+      } catch (err) {
+        console.error("Hardware mic error:", err);
+        updateMicBadge("error", "Mic Permission Blocked");
+        document.getElementById("liveCaption").textContent =
+          "⚠️ Microphone permission blocked. Click the lock/camera icon in Chrome address bar to Allow.";
+        return false;
+      }
+    }
+
+    function startWaveformVisualizer() {
+      if (visualizerFrameId) cancelAnimationFrame(visualizerFrameId);
+      const waveBars = document.querySelectorAll(".wave-bar");
+      if (!analyser || waveBars.length === 0) return;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      function loop() {
+        visualizerFrameId = requestAnimationFrame(loop);
+        if (!analyser || isAriaSpeaking) {
+          waveBars.forEach(b => { b.style.transform = "scaleY(0.25)"; });
+          return;
+        }
+
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const avg = sum / dataArray.length;
+
+        if (avg > 12) {
+          updateMicBadge("active", `🎙️ Voice detected (${Math.round(avg)}%)`);
+        } else if (callActive && agentState === "LISTENING") {
+          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+        }
+
+        waveBars.forEach((bar, idx) => {
+          const val = dataArray[idx * 2] || avg;
+          const scale = Math.max(0.22, Math.min(1.5, val / 85));
+          bar.style.transform = `scaleY(${scale.toFixed(2)})`;
+        });
+      }
+      loop();
+    }
+
+    function getRecognizer() {
+      if (!SpeechRecognition) return null;
+      if (recognition) return recognition;
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.lang = "en-IN";
+
+      recognition.onstart = () => {
+        isRecognizing = true;
+        if (callActive && !isAriaSpeaking && agentState === "LISTENING") {
+          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+        }
+      };
+
+      recognition.onresult = (event) => {
+        if (!callActive || isAriaSpeaking || agentState !== "LISTENING") return;
+
+        let fullText = "";
+        for (let i = 0; i < event.results.length; ++i) {
+          fullText += event.results[i][0].transcript + " ";
+        }
+        fullText = fullText.trim();
+        if (!fullText) return;
+
+        turnDraft = fullText;
+        document.getElementById("liveCaption").textContent = `"${fullText}..."`;
+        updateMicBadge("active", `🎙️ Transcribing: "${fullText.slice(-25)}"`);
+
+        // Check if the latest chunk was finalized
+        const latestIsFinal = event.results[event.results.length - 1].isFinal;
+
+        // Reset silence commit timer: natural conversational pause submits turn
+        if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
+        const delay = latestIsFinal ? 900 : 1200;
+        silenceCommitTimer = setTimeout(() => {
+          commitUserTurn();
+        }, delay);
+      };
+
+      recognition.onerror = (event) => {
+        isRecognizing = false;
+        if (event.error === "no-speech") {
+          // Normal silence timeout in Chrome
+          return;
+        }
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          updateMicBadge("error", "Mic Permission Blocked");
+          document.getElementById("liveCaption").textContent =
+            "⚠️ Microphone permission blocked. Click lock icon in browser address bar to Allow.";
+          return;
+        }
+        if (event.error === "network") {
+          updateMicBadge("error", "Speech Network Reconnecting...");
+          return;
+        }
+        console.warn("Speech recognition error:", event.error);
+      };
+
+      recognition.onend = () => {
+        isRecognizing = false;
+        // If there is pending speech that wasn't committed before Chrome closed the session, commit now!
+        if (turnDraft.trim() && callActive && !isAriaSpeaking && agentState === "LISTENING") {
+          commitUserTurn();
+          return;
+        }
+        // Otherwise revive listener if call is active and Aria is not speaking
+        if (callActive && !isAriaSpeaking && agentState === "LISTENING") {
+          scheduleRecognitionRestart(150);
+        }
+      };
+
+      return recognition;
+    }
+
+    function commitUserTurn() {
+      if (silenceCommitTimer) {
+        clearTimeout(silenceCommitTimer);
+        silenceCommitTimer = null;
+      }
+      if (!callActive || isAriaSpeaking || agentState !== "LISTENING") return;
+
+      const text = turnDraft.trim();
+      if (!text) return;
+
+      turnDraft = "";
+      stopRecognitionSafely();
+      sendUserTurn(text);
+    }
+
+    function scheduleRecognitionRestart(delay = 150) {
+      if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
+      recognitionRestartTimer = setTimeout(() => {
+        if (callActive && !isAriaSpeaking && agentState === "LISTENING" && !isRecognizing) {
+          startRecognitionSafely();
+        }
+      }, delay);
+    }
+
+    function startRecognitionSafely() {
+      if (!callActive || isAriaSpeaking || agentState !== "LISTENING" || isRecognizing) return;
+      const rec = getRecognizer();
+      if (!rec) return;
+
+      try {
+        rec.start();
+        isRecognizing = true;
+      } catch (e) {
+        // Recognition might be in transition; retry shortly
+        isRecognizing = false;
+        scheduleRecognitionRestart(200);
+      }
+    }
+
+    function stopRecognitionSafely() {
+      if (recognitionRestartTimer) {
+        clearTimeout(recognitionRestartTimer);
+        recognitionRestartTimer = null;
+      }
+      if (recognition && isRecognizing) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          try { recognition.abort(); } catch (_) {}
+        }
+      }
+      isRecognizing = false;
+    }
+
+    function setLanguageMode(mode) {
+      languageMode = mode;
+      const btnHi = document.getElementById("btnLangHinglish");
+      const btnEn = document.getElementById("btnLangEnglish");
+      if (mode === "hinglish") {
+        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
+        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+      } else {
+        btnEn.className = "px-3.5 py-1 rounded-full text-xs font-semibold bg-[#233B30] text-[#FAF7F2] transition";
+        btnHi.className = "px-3.5 py-1 rounded-full text-xs font-semibold text-[#1C2420] hover:bg-[#E8E2D5] transition";
+      }
+    }
+
+    function setAgentState(state, captionText) {
+      agentState = state;
+      const badge = document.getElementById("stateBadge");
+      const dot = document.getElementById("stateDot");
+      const label = document.getElementById("stateLabel");
+      const wave = document.getElementById("waveContainer");
+      const caption = document.getElementById("liveCaption");
+
+      if (captionText) caption.textContent = captionText;
+
+      if (state === "LISTENING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E3ECE8] text-[#233B30] border border-[#233B30]/30";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping";
+        label.textContent = "Listening";
+        wave.classList.add("wave-active");
+      } else if (state === "THINKING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/40";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse";
+        label.textContent = "Thinking";
+        wave.classList.remove("wave-active");
+      } else if (state === "SPEAKING") {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F9E6E0] text-[#C86D51] border border-[#C86D51]/40";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#C86D51] animate-pulse";
+        label.textContent = "Speaking";
+        wave.classList.add("wave-active");
+      } else {
+        badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]";
+        dot.className = "w-2.5 h-2.5 rounded-full bg-[#6B7280]";
+        label.textContent = "Idle — Ready";
+        wave.classList.remove("wave-active");
+      }
+    }
+
+    function renderOrdersTable(orders) {
+      const tbody = document.getElementById("ordersTableBody");
+      tbody.innerHTML = orders.map(o => {
+        let badgeStyle = "bg-[#FEF3C7] text-[#92400E]";
+        if (o.status === "Out for Delivery") badgeStyle = "bg-[#E0F2FE] text-[#075985]";
+        if (o.status === "Delivered") badgeStyle = "bg-[#DCFCE7] text-[#166534]";
+        if (o.status === "Cancelled") badgeStyle = "bg-[#FEE2E2] text-[#991B1B]";
+
+        return `
+          <tr class="hover:bg-[#F3EFE6]/60 transition">
+            <td class="py-3 px-3 font-mono-code font-semibold text-[#233B30]">${o.order_id}</td>
+            <td class="py-3 px-3 font-medium">${o.customer}</td>
+            <td class="py-3 px-3">${o.product}</td>
+            <td class="py-3 px-3 font-mono-code">${o.value}</td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${badgeStyle}">${o.status}</span>
+            </td>
+            <td class="py-3 px-3 text-[#5A625E]">${o.notes}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderTranscript() {
+      const box = document.getElementById("transcriptList");
+      document.getElementById("turnCounter").textContent = `${transcript.length} turns`;
+      if (transcript.length === 0) {
+        box.innerHTML = `<p class="text-xs text-[#5A625E] text-center py-10">No active conversation yet. Start a call to view the live chronological transcript.</p>`;
+        return;
+      }
+      box.innerHTML = transcript.map(t => {
+        const isUser = t.role === "user";
+        return `
+          <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'}">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-[#5A625E]">${isUser ? 'Customer' : 'Aria (Aura CX)'}</span>
+              ${t.tool_used ? `<span class="font-mono-code text-[10px] bg-[#E3ECE8] text-[#233B30] px-1.5 py-0.2 rounded">⚡ ${t.tool_used}</span>` : ''}
+            </div>
+            <div class="max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${isUser ? 'bg-[#233B30] text-[#FAF7F2]' : 'bg-[#EFEAE0] text-[#1C2420] border border-[#E2D9C8]'}">
+              ${t.text}
+            </div>
+          </div>
+        `;
+      }).join("");
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function stopCurrentAudio() {
+      if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
+      ariaSafetyTimer = null;
+      isAriaSpeaking = false;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function finishAriaSpeaking() {
+      if (ariaSafetyTimer) {
+        clearTimeout(ariaSafetyTimer);
+        ariaSafetyTimer = null;
+      }
+      currentAudio = null;
+
+      // 250ms guard buffer prevents speaker echo from triggering microphone recognition
+      setTimeout(() => {
+        isAriaSpeaking = false;
+        if (callActive) {
+          setAgentState("LISTENING", "Listening to you... speak naturally");
+          updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+          startRecognitionSafely();
+        } else {
+          setAgentState("IDLE", "Call ended.");
+        }
+      }, 250);
+    }
+
+    function playAgentAudio(base64Data, mimeType, fallbackText) {
+      stopCurrentAudio();
+      isAriaSpeaking = true;
+      stopRecognitionSafely();
+      setAgentState("SPEAKING", `Aria: "${fallbackText}"`);
+      updateMicBadge("standby", "Aria Speaking (Mic Muted)");
+
+      // Hard safety timeout: if audio stalls, forcibly release lock after max 7 seconds
+      const maxSeconds = Math.max(3, Math.min(7, Math.ceil(fallbackText.length / 10)));
+      if (ariaSafetyTimer) clearTimeout(ariaSafetyTimer);
+      ariaSafetyTimer = setTimeout(() => {
+        if (isAriaSpeaking) {
+          finishAriaSpeaking();
+        }
+      }, maxSeconds * 1000);
+
+      if (base64Data) {
+        currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
+        currentAudio.onended = () => finishAriaSpeaking();
+        currentAudio.onerror = () => speakBrowserFallback(fallbackText);
+        currentAudio.play().catch(() => speakBrowserFallback(fallbackText));
+      } else {
+        speakBrowserFallback(fallbackText);
+      }
+    }
+
+    function speakBrowserFallback(text) {
+      if (!window.speechSynthesis) {
+        finishAriaSpeaking();
+        return;
+      }
+      isAriaSpeaking = true;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = languageMode === "hinglish" ? "hi-IN" : "en-IN";
+      utter.rate = 1.05;
+      utter.onend = () => finishAriaSpeaking();
+      utter.onerror = () => finishAriaSpeaking();
+      window.speechSynthesis.speak(utter);
+    }
+
+    async function startCall() {
+      callActive = true;
+      transcript = [];
+      turnDraft = "";
+      renderTranscript();
+      document.getElementById("btnStartCall").disabled = true;
+      document.getElementById("btnStartCall").classList.add("opacity-50");
+      document.getElementById("btnEndCall").disabled = false;
+      document.getElementById("btnPushToTalk").disabled = false;
+
+      // 1. Initialize hardware microphone stream & visualizer immediately
+      await initMicrophone();
+
+      // 2. Play greeting and start conversational loop
+      setAgentState("THINKING", "Connecting to Aria...");
+      try {
+        const res = await fetch(`/api/greeting?language_mode=${languageMode}`);
+        const data = await res.json();
+        renderOrdersTable(data.orders);
+        transcript.push({ role: "assistant", text: data.reply_text, timestamp: new Date().toLocaleTimeString() });
+        renderTranscript();
+        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
+      } catch (err) {
+        setAgentState("LISTENING", "Connected. Speak now.");
+        startRecognitionSafely();
+      }
+    }
+
+    async function sendUserTurn(userText) {
+      if (!userText.trim()) return;
+      stopCurrentAudio();
+      stopRecognitionSafely();
+
+      transcript.push({ role: "user", text: userText, timestamp: new Date().toLocaleTimeString() });
+      renderTranscript();
+      setAgentState("THINKING", `Processing: "${userText}"`);
+
+      try {
+        const res = await fetch("/api/voice-turn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_text: userText,
+            history: transcript.slice(0, -1),
+            language_mode: languageMode
+          })
+        });
+        const data = await res.json();
+        renderOrdersTable(data.orders);
+
+        const toolBadge = document.getElementById("toolIndicator");
+        if (data.tool_used) {
+          toolBadge.textContent = `Tool: ${data.tool_used}`;
+          toolBadge.classList.remove("hidden");
+        } else {
+          toolBadge.classList.add("hidden");
+        }
+
+        transcript.push({
+          role: "assistant",
+          text: data.reply_text,
+          timestamp: new Date().toLocaleTimeString(),
+          tool_used: data.tool_used
+        });
+        renderTranscript();
+        playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
+        refreshLiveSummary();
+      } catch (e) {
+        setAgentState("LISTENING", "Ready for next question.");
+        startRecognitionSafely();
+      }
+    }
+
+    async function endCall() {
+      callActive = false;
+      stopCurrentAudio();
+      stopRecognitionSafely();
+      if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
+      if (recognitionRestartTimer) clearTimeout(recognitionRestartTimer);
+      if (visualizerFrameId) cancelAnimationFrame(visualizerFrameId);
+      if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+        micStream = null;
+      }
+      turnDraft = "";
+      updateMicBadge("standby", "Mic: Standby (Call Ended)");
+
+      document.getElementById("btnStartCall").disabled = false;
+      document.getElementById("btnStartCall").classList.remove("opacity-50");
+      document.getElementById("btnEndCall").disabled = true;
+      document.getElementById("btnPushToTalk").disabled = true;
+      setAgentState("IDLE", "Call ended. Generating structured post-call summary...");
+      await refreshLiveSummary();
+      setAgentState("IDLE", "Call ended. Review transcript & JSON outcome on the right.");
+    }
+
+    async function refreshLiveSummary() {
+      if (transcript.length === 0) return;
+      try {
+        const res = await fetch("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript })
+        });
+        const summary = await res.json();
+        document.getElementById("summaryJsonBox").textContent = JSON.stringify(summary, null, 2);
+      } catch (e) {}
+    }
+
+    function toggleMicManual() {
+      stopCurrentAudio();
+      isAriaSpeaking = false;
+      turnDraft = "";
+      if (silenceCommitTimer) clearTimeout(silenceCommitTimer);
+      setAgentState("LISTENING", "Interrupted — Listening to you now...");
+      updateMicBadge("listening", "🎙️ Listening... Speak naturally");
+      stopRecognitionSafely();
+      setTimeout(startRecognitionSafely, 100);
+    }
+
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("manualInput");
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = "";
+      if (!callActive) {
+        callActive = true;
+        document.getElementById("btnStartCall").disabled = true;
+        document.getElementById("btnStartCall").classList.add("opacity-50");
+        document.getElementById("btnEndCall").disabled = false;
+        document.getElementById("btnPushToTalk").disabled = false;
+      }
+      sendUserTurn(val);
+    }
+
+    function simulatePrompt(text) {
+      if (!callActive) {
+        callActive = true;
+        document.getElementById("btnStartCall").disabled = true;
+        document.getElementById("btnStartCall").classList.add("opacity-50");
+        document.getElementById("btnEndCall").disabled = false;
+        document.getElementById("btnPushToTalk").disabled = false;
+      }
+      sendUserTurn(text);
+    }
+
+    async function resetDemoData() {
+      const res = await fetch("/api/reset", { method: "POST" });
+      const data = await res.json();
+      renderOrdersTable(data.orders);
+    }
+
+    function copySummaryJson() {
+      const text = document.getElementById("summaryJsonBox").textContent;
+      navigator.clipboard.writeText(text);
+    }
+
+    // Load initial orders on page load
+    fetch("/api/orders").then(r => r.json()).then(d => renderOrdersTable(d.orders));
+  </script>
+</body>
+</html>

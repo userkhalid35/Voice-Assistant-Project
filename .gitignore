@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+.pytest_cache/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables & secrets
+.env
+.env*.local
+!.env.example
+
+# Temporary test artifacts & MCP logs
+.playwright-mcp/
+.taskmaster/
+structure.txt
+
+# IDEs and OS-specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
