@@ -11,9 +11,10 @@ A real-time, low-latency AI Voice CX & Skincare Specialist built with **Python**
    - STT runs on `en-IN`, capturing Indian English and conversational Hindi/Hinglish phonetics naturally.
    - Aria automatically mirrors the customer's language on every turn: English queries receive concise Indian English answers, while Hindi/Hinglish queries receive natural conversational Hinglish in clean Roman script.
 
-2. **100% Hands-Free Voice UX (True Voice Barge-In & Auto Turn Detection):**
+2. **Rock-Solid Turn-by-Turn Voice Flow (Half-Duplex Acoustic Isolation):**
    - **Two Primary Action Buttons Only:** Clean, focused interface with only **Start Call** and **End Call**.
-   - **Hands-Free Barge-In (Interruption):** Continuous background audio monitoring (`AudioContext` + `SpeechRecognition`) detects user interjections while Aria is speaking. Sustained speech (>250ms vocal energy or speech recognition events) immediately cancels audio playback (`window.speechSynthesis.cancel()`, `<audio>.pause()`), aborts in-flight network requests via `AbortController`, and transitions to `Listening`.
+   - **Half-Duplex Turn-Based Acoustic Isolation:** Completely eliminates false microphone triggers, laptop speaker echo, and ambient interruptions. When Aria is in `Thinking` or `Speaking` state, the hardware microphone audio track is disabled (`track.enabled = false`), `SpeechRecognition` is aborted, and mic input is locked to 0%.
+   - **300ms Echo-Settle Delay:** Only after Aria's speech playback finishes (`onend`), the system waits a 300ms echo-settle delay for trailing laptop speaker reverberation to completely disperse before re-enabling hardware mic tracks and switching to `Listening`.
    - **Auto Silence Turn Detection:** Automatically detects a natural pause of ~1.1 seconds when the user finishes speaking, finalizes the turn, and sends it to the backend (`Listening` -> `Thinking` -> `Speaking`) with zero button clicks.
 
 3. **Multi-Tool Calling & Skincare Consultation Engine:**
@@ -123,11 +124,11 @@ This repository is pre-configured with a root `Dockerfile` and `render.yaml` Blu
                          │
                          ▼ (Base64 Audio + Live State Sync)
 ┌────────────────────────────────────────────────────────┐
-│ Client UI & Hands-Free Barge-In Engine                 │
+│ Client UI & Half-Duplex Acoustic Isolation Engine      │
 │ • Only Start Call & End Call buttons                   │
-│ • Background mic energy monitor + SpeechRecognition    │
-│ • Sustained user vocal interruption (>250ms)           │
-│   -> Cancels audio, aborts fetch, switches to Listen   │
+│ • Disables hardware mic & aborts STT during TTS (0%)   │
+│ • 300ms echo-settle delay after Aria finishes speaking │
+│ • Re-enables mic tracks & starts STT in Listening      │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -152,7 +153,7 @@ FastAPI on ASGI with `httpx` async connections provides non-blocking I/O with ne
 
 ---
 
-### 2. How the hardest challenge was solved: Unified Multilingual Mirroring, Latency & Voice Barge-In
+### 2. How the hardest challenge was solved: Unified Multilingual Mirroring, Latency & Half-Duplex Acoustic Isolation
 The three most critical challenges in production voice CX for Indian commerce are:
 1. **Unified Multilingual Detection & Language Mirroring:**
    - *Problem:* Requiring users to click a language toggle breaks hands-free voice interactions. Furthermore, Indian customers frequently switch between English and Hinglish mid-dialogue.
@@ -160,9 +161,9 @@ The three most critical challenges in production voice CX for Indian commerce ar
 2. **ASR Number Discrepancies & Catalog Queries:**
    - *Problem:* STT engines transcribe order IDs inconsistently as words, spaced digits, or hyphens (e.g., *"order one zero one"*, *"o r d 1 0 1"*, *"order one-zero-one"*, *"101"*).
    - *Solution:* We built `extract_and_normalize_order_id()` with word-to-digit translation (`"one"` -> `1`, `"oh"` -> `0`, `"won"` -> `1`), regex digit-collapse (`r"(?<=\d)[\s\-]+(?=\d)"`), and multi-tier regex matching. For skincare queries, `get_product_recommendations` matches skin concerns (e.g. oily, dull, acne) to exact SKUs in under 0.1ms.
-3. **Hands-Free Barge-In (Interruption Handling):**
-   - *Problem:* Traditional voice agents lock the microphone while the agent speaks, forcing users to wait through long responses.
-   - *Solution:* While Aria is in the `Speaking` state, the microphone audio monitor (`AudioContext` + `scriptProcessor` with echo cancellation) and background `SpeechRecognition` remain active. Sustained vocal input (>250ms above voice energy threshold or speech recognition event) immediately stops audio output (`stopCurrentAudio()`), aborts pending network fetches via `AbortController`, and smoothly transitions the state machine to `Listening`.
+3. **Eliminating False Triggers & Speaker Echo via Half-Duplex Acoustic Isolation:**
+   - *Problem:* In full-duplex voice systems, laptop speakers play synthesized speech into the room, causing false interruptions, speaker echo, and chopped agent responses when the microphone picks up Aria's own voice or low ambient room noise (1%–2%).
+   - *Solution:* We replaced barge-in with a rock-solid, turn-by-turn (half-duplex) voice flow. Whenever Aria transitions to `Thinking` or `Speaking`, the client immediately disables the hardware microphone audio tracks (`track.enabled = false`), aborts `SpeechRecognition`, and forces audio visualizers to 0%. When Aria finishes speaking (`onend`), the browser waits a 300ms echo-settle delay so trailing speaker acoustic reflections completely vanish before re-enabling the microphone tracks, clearing transcript buffers, and entering `Listening` mode.
 
 ---
 

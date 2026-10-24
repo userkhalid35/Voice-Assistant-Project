@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +8,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg-linen: #FAF7F2;
@@ -17,13 +20,21 @@
       --terracotta: #C86D51;
       --charcoal: #1C2420;
     }
+
     body {
       background-color: var(--bg-linen);
       color: var(--charcoal);
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    .font-serif-editorial { font-family: 'Cormorant Garamond', serif; }
-    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+
+    .font-serif-editorial {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
     .wave-bar {
       width: 5px;
       height: 34px;
@@ -32,6 +43,7 @@
       transform: scaleY(0.2);
       transition: transform 0.08s ease;
     }
+
     /* Compact Mobile Header (Requirement 3) */
     header.site-header {
       background-color: rgba(250, 247, 242, 0.95);
@@ -41,6 +53,7 @@
       z-index: 20;
       backdrop-filter: blur(8px);
     }
+
     .header-inner {
       max-width: 80rem;
       margin: 0 auto;
@@ -50,10 +63,12 @@
       justify-content: space-between;
       gap: 16px;
     }
+
     @media (max-width: 640px) {
       header.site-header {
         height: 52px !important;
       }
+
       .header-inner {
         height: 52px !important;
         padding: 6px 14px !important;
@@ -63,15 +78,18 @@
         flex-wrap: nowrap !important;
         gap: 8px !important;
       }
+
       .header-logo {
         width: 30px !important;
         height: 30px !important;
         font-size: 0.95rem !important;
       }
+
       .header-title {
         font-size: 0.95rem !important;
         line-height: 1.1 !important;
       }
+
       .header-subtitle,
       .header-badge {
         display: none !important;
@@ -79,22 +97,26 @@
     }
   </style>
 </head>
+
 <body class="min-h-screen flex flex-col">
   <!-- Clean Customer-Facing Header (Requirements 2 & 3) -->
   <header class="site-header">
     <div class="header-inner">
       <div class="flex items-center gap-3">
-        <div class="header-logo w-10 h-10 rounded-full bg-[#233B30] text-[#FAF7F2] flex items-center justify-center font-serif-editorial text-2xl font-bold tracking-wider shadow-sm flex-shrink-0">
+        <div
+          class="header-logo w-10 h-10 rounded-full bg-[#233B30] text-[#FAF7F2] flex items-center justify-center font-serif-editorial text-2xl font-bold tracking-wider shadow-sm flex-shrink-0">
           A
         </div>
         <div>
-          <h1 class="header-title font-serif-editorial text-2xl md:text-3xl font-bold tracking-tight text-[#1C2420]">Aura Skincare</h1>
+          <h1 class="header-title font-serif-editorial text-2xl md:text-3xl font-bold tracking-tight text-[#1C2420]">
+            Aura Skincare</h1>
           <p class="header-subtitle text-xs text-[#5A625E]">Aria — AI Customer Support</p>
         </div>
       </div>
 
       <div class="header-badge flex items-center gap-2">
-        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#233B30] border border-[#D5CBB8]">
+        <span
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#233B30] border border-[#D5CBB8]">
           <span class="w-2 h-2 rounded-full bg-[#233B30] animate-pulse"></span>
           <span>AI Support Online</span>
         </span>
@@ -111,14 +133,16 @@
           <div>
             <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Aria — Customer Support</h2>
           </div>
-          <div id="stateBadge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]">
+          <div id="stateBadge"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E8E2D5] text-[#1C2420] border border-[#D5CBB8]">
             <span id="stateDot" class="w-2.5 h-2.5 rounded-full bg-[#6B7280]"></span>
             <span id="stateLabel">Idle — Ready</span>
           </div>
         </div>
 
         <!-- Audio Waveform Visualizer & Live Mic Activity -->
-        <div class="bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-5 mb-4 flex flex-col items-center justify-center min-h-[140px]">
+        <div
+          class="bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-5 mb-4 flex flex-col items-center justify-center min-h-[140px]">
           <div id="waveContainer" class="flex items-center gap-2 mb-3">
             <div class="wave-bar" id="bar0"></div>
             <div class="wave-bar" id="bar1"></div>
@@ -144,18 +168,21 @@
 
         <!-- Primary Action Buttons: Start Call & End Call -->
         <div class="grid grid-cols-2 gap-3 mb-2">
-          <button id="btnStartCall" onclick="startCall()" class="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-[#233B30] hover:bg-[#1A2C24] text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+          <button id="btnStartCall" onclick="startCall()"
+            class="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-[#233B30] hover:bg-[#1A2C24] text-[#FAF7F2] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
             <span>●</span> Start Voice Call
           </button>
-          <button id="btnEndCall" onclick="endCall()" disabled class="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none text-[#FAF7F2] transition flex items-center justify-center gap-2">
+          <button id="btnEndCall" onclick="endCall()" disabled
+            class="w-full py-3.5 px-4 rounded-xl font-semibold text-sm bg-[#C86D51] hover:bg-[#B25B40] disabled:opacity-40 disabled:pointer-events-none text-[#FAF7F2] transition flex items-center justify-center gap-2">
             <span>■</span> End Call
           </button>
         </div>
 
         <!-- Clean One-line Status Message (Requirement 2) -->
         <div class="mt-2.5 flex items-center justify-between text-[11px] text-[#5A625E]">
-          <span id="micStatusText">Hands-free voice assistant with auto-pause &amp; barge-in.</span>
-          <span id="toolIndicator" class="font-mono-code text-[10px] text-[#233B30] bg-[#E3ECE8] px-2 py-0.5 rounded hidden"></span>
+          <span id="micStatusText">Hands-free voice assistant — speaks and listens automatically turn-by-turn.</span>
+          <span id="toolIndicator"
+            class="font-mono-code text-[10px] text-[#233B30] bg-[#E3ECE8] px-2 py-0.5 rounded hidden"></span>
         </div>
       </div>
 
@@ -165,8 +192,10 @@
           <h3 class="font-serif-editorial text-xl font-bold text-[#1C2420]">Live Call Transcript</h3>
           <span id="turnCounter" class="text-xs font-mono-code text-[#5A625E]">0 turns</span>
         </div>
-        <div id="transcriptList" class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-4 overflow-y-auto space-y-3 max-h-[360px]">
-          <p class="text-xs text-[#5A625E] text-center py-12">No active conversation yet. Click "Start Voice Call" to talk with Aria.</p>
+        <div id="transcriptList"
+          class="flex-1 bg-[#FAF7F2] border border-[#E2D9C8] rounded-xl p-4 overflow-y-auto space-y-3 max-h-[360px]">
+          <p class="text-xs text-[#5A625E] text-center py-12">No active conversation yet. Click "Start Voice Call" to
+            talk with Aria.</p>
         </div>
       </div>
     </section>
@@ -179,7 +208,8 @@
           <div>
             <h2 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Sample Orders (Test Reference)</h2>
           </div>
-          <button onclick="resetDemoData()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] text-[#1C2420] transition">
+          <button onclick="resetDemoData()"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] text-[#1C2420] transition">
             ↺ Reset Orders
           </button>
         </div>
@@ -205,7 +235,8 @@
           <div>
             <p class="text-xs font-semibold text-[#233B30] mb-1">Spoken Query Suggestions:</p>
             <p class="text-xs text-[#5A625E] leading-relaxed">
-              Try saying: <em>"Where is my order ORD-101?"</em>, <em>"Meri oily skin hai, kaunsa product best rahega?"</em>, or <em>"Can I cancel order ORD-103?"</em>
+              Try saying: <em>"Where is my order ORD-101?"</em>, <em>"Meri oily skin hai, kaunsa product best
+                rahega?"</em>, or <em>"Can I cancel order ORD-103?"</em>
             </p>
           </div>
         </div>
@@ -237,11 +268,13 @@
           <div>
             <h3 class="font-serif-editorial text-2xl font-bold text-[#1C2420]">Call Outcome Summary</h3>
           </div>
-          <button id="btnCopyJson" onclick="copySummaryJson()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] transition">
+          <button id="btnCopyJson" onclick="copySummaryJson()"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#E2D9C8] hover:bg-[#E8E2D5] transition">
             Copy JSON
           </button>
         </div>
-        <pre id="summaryJsonBox" class="flex-1 bg-[#1C2420] text-[#E8E2D5] font-mono-code text-xs p-4 rounded-xl overflow-x-auto leading-relaxed">{
+        <pre id="summaryJsonBox"
+          class="flex-1 bg-[#1C2420] text-[#E8E2D5] font-mono-code text-xs p-4 rounded-xl overflow-x-auto leading-relaxed">{
   "status": "End the call or complete a conversation turn to generate the structured JSON call outcome."
 }</pre>
       </div>
@@ -271,6 +304,7 @@
 
     // AudioContext + Real-time Microphone VAD & Energy Monitoring
     let mediaStream = null;
+    let micStream = null;
     let audioCtx = null;
     let analyserNode = null;
     let scriptProcessor = null;
@@ -285,6 +319,8 @@
     // Browser SpeechRecognition
     let recognition = null;
     let liveSpeechHint = "";
+    let finalTranscript = "";
+    let interimTranscript = "";
     let hintSilenceTimer = null;
     let sessionFinalizedSegments = [];
     let currentTurnFinalText = "";
@@ -301,36 +337,38 @@
 
     function openMicInput() {
       isMicInputOpen = true;
-      if (mediaStream) {
-        const tracks = mediaStream.getAudioTracks ? mediaStream.getAudioTracks() : (mediaStream.getTracks ? mediaStream.getTracks() : []);
+      const stream = micStream || mediaStream;
+      if (stream) {
+        const tracks = stream.getAudioTracks ? stream.getAudioTracks() : (stream.getTracks ? stream.getTracks() : []);
         tracks.forEach(t => { t.enabled = true; });
       }
       const micStatusDot = document.getElementById("micStatusDot");
       const micStatusText = document.getElementById("micStatusText");
       if (micStatusDot) micStatusDot.className = "w-2 h-2 rounded-full bg-[#10B981] animate-pulse";
-      if (micStatusText) micStatusText.textContent = "Mic Open";
+      if (micStatusText && callActive) micStatusText.textContent = "Mic Open (Listening)";
 
       if (callActive && agentState === "LISTENING") {
         if (!recognition) setupSpeechRecognition();
-        try { recognition.start(); } catch (e) {}
+        try { recognition.start(); } catch (e) { }
       }
     }
 
     function shutMicInput() {
       isMicInputOpen = false;
-      if (mediaStream) {
-        const tracks = mediaStream.getAudioTracks ? mediaStream.getAudioTracks() : (mediaStream.getTracks ? mediaStream.getTracks() : []);
+      const stream = micStream || mediaStream;
+      if (stream) {
+        const tracks = stream.getAudioTracks ? stream.getAudioTracks() : (stream.getTracks ? stream.getTracks() : []);
         tracks.forEach(t => { t.enabled = false; });
       }
       if (recognition) {
-        try { recognition.abort(); } catch (e) {}
+        try { recognition.abort(); } catch (e) { }
       }
       currentMicLevelPct = 0;
       updateMicVisualizer(0);
       const micStatusDot = document.getElementById("micStatusDot");
       const micStatusText = document.getElementById("micStatusText");
       if (micStatusDot) micStatusDot.className = "w-2 h-2 rounded-full bg-[#92400E]";
-      if (micStatusText) micStatusText.textContent = "Mic Shut (Aria Answering)";
+      if (micStatusText && callActive) micStatusText.textContent = `Mic Shut (${agentState === "SPEAKING" ? "Aria Speaking" : "Processing"})`;
     }
 
     function setupSpeechRecognition() {
@@ -355,12 +393,16 @@
 
         let fullTranscript = "";
         currentTurnFinalText = "";
+        interimTranscript = "";
         for (let i = 0; i < event.results.length; i++) {
           const piece = (event.results[i][0].transcript || "").trim();
           if (piece) {
             fullTranscript += (fullTranscript ? " " : "") + piece;
             if (event.results[i].isFinal) {
               currentTurnFinalText = piece;
+              finalTranscript = piece;
+            } else {
+              interimTranscript = piece;
             }
           }
         }
@@ -397,12 +439,12 @@
         if (currentTurnFinalText && !sessionFinalizedSegments.includes(currentTurnFinalText)) {
           sessionFinalizedSegments.push(currentTurnFinalText);
         }
-        // Auto-restart recognition session ONLY when call is active, agent is in LISTENING state, and mic is open
-        if (callActive && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
+        // In recognition.onend, ONLY auto-restart recognition.start() if callActive === true && currentState === 'Listening'
+        if (callActive === true && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
           setTimeout(() => {
-            if (callActive && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
+            if (callActive === true && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
               setupSpeechRecognition();
-              try { recognition.start(); } catch (e) {}
+              try { recognition.start(); } catch (e) { }
             }
           }, 40);
         }
@@ -438,10 +480,13 @@
       return voiceBins > 0 ? (voiceSum / voiceBins) : 0;
     }
 
-    // Audio Monitoring Step for Voice Frequency Analysis & Barge-In Detection
+    // Audio Monitoring Step for Voice Frequency Analysis
     function audioMonitorStep() {
-      if (!callActive || !isMicInputOpen || agentState !== "LISTENING") return;
-      const now = getNow();
+      if (!callActive || !isMicInputOpen || agentState !== "LISTENING") {
+        currentMicLevelPct = 0;
+        updateMicVisualizer(0);
+        return;
+      }
       const voiceBandEnergy = getHumanVoiceBandEnergy();
 
       // If scriptProcessor is not actively driving mic visualizer (e.g. initial connection or test runner)
@@ -490,6 +535,7 @@
             autoGainControl: true
           }
         });
+        micStream = mediaStream;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return true;
         audioCtx = new AudioContextClass();
@@ -503,7 +549,7 @@
         }
 
         scriptProcessor = audioCtx.createScriptProcessor ? audioCtx.createScriptProcessor(4096, 1, 1) : null;
-        silentGainNode = audioCtx.createGain ? audioCtx.createGain() : { connect: () => {}, gain: { value: 0 } };
+        silentGainNode = audioCtx.createGain ? audioCtx.createGain() : { connect: () => { }, gain: { value: 0 } };
         if (silentGainNode.gain) silentGainNode.gain.value = 0;
 
         if (scriptProcessor) {
@@ -533,7 +579,7 @@
             // Filter out low-frequency AC/fan hum (<300Hz); consider active speech ONLY if
             // voice-band energy or clear vocal RMS exceeds the dynamic threshold.
             const isSpeechActive = (voiceBandEnergy > Math.max(30, ambientNoiseFloor + 14)) ||
-                                   (rms > Math.max(0.032, ambientNoiseRms * 2.5));
+              (rms > Math.max(0.032, ambientNoiseRms * 2.5));
 
             if (isSpeechActive) {
               if (!hasSpokenInTurn) {
@@ -580,17 +626,26 @@
     }
 
     function updateMicVisualizer(pct) {
+      const effectivePct = (agentState === "LISTENING" && isMicInputOpen) ? pct : 0;
       const micBar = document.getElementById("micLevelBar");
       const micText = document.getElementById("micLevelText");
-      if (micBar) micBar.style.width = `${pct}%`;
-      if (micText) micText.textContent = `${pct}%`;
+      if (micBar) micBar.style.width = `${effectivePct}%`;
+      if (micText) micText.textContent = `${effectivePct}%`;
 
-      if (agentState === "LISTENING" || agentState === "SPEAKING") {
+      if (agentState === "LISTENING") {
         const factors = [0.4, 0.7, 1.0, 0.85, 0.95, 0.65, 0.45];
         for (let i = 0; i < 7; i++) {
           const bar = document.getElementById(`bar${i}`);
           if (bar) {
-            const scale = agentState === "SPEAKING" ? 0.3 + Math.random() * 0.7 : Math.max(0.2, Math.min(1.0, (pct / 75) * factors[i]));
+            const scale = Math.max(0.2, Math.min(1.0, (effectivePct / 75) * factors[i]));
+            bar.style.transform = `scaleY(${scale.toFixed(2)})`;
+          }
+        }
+      } else if (agentState === "SPEAKING") {
+        for (let i = 0; i < 7; i++) {
+          const bar = document.getElementById(`bar${i}`);
+          if (bar) {
+            const scale = 0.3 + Math.random() * 0.7;
             bar.style.transform = `scaleY(${scale.toFixed(2)})`;
           }
         }
@@ -771,12 +826,59 @@
     }
 
     function setAgentState(state, captionText) {
-      agentState = state;
-      if (state === "SPEAKING") {
+      const normalizedState = (typeof state === "string") ? state.toUpperCase() : state;
+      agentState = normalizedState;
+      if (agentState === "SPEAKING") {
         ariaSpeakingStartTime = getNow();
         consecutiveVoiceFrames = 0;
         voiceEnergyStartTime = 0;
       }
+
+      if (agentState !== "LISTENING") {
+        // 1. Immediately clear any active silence timers and clear any partial/interim transcript buffers
+        if (hintSilenceTimer) {
+          clearTimeout(hintSilenceTimer);
+          hintSilenceTimer = null;
+        }
+        finalTranscript = "";
+        interimTranscript = "";
+        liveSpeechHint = "";
+        currentTurnFinalText = "";
+        pcmChunks = [];
+        hasSpokenInTurn = false;
+        consecutiveVoiceFrames = 0;
+        voiceEnergyStartTime = 0;
+
+        // 2. Disable the hardware microphone audio tracks
+        const stream = micStream || mediaStream;
+        if (stream) {
+          const tracks = stream.getAudioTracks ? stream.getAudioTracks() : (stream.getTracks ? stream.getTracks() : []);
+          tracks.forEach(track => { track.enabled = false; });
+        }
+        isMicInputOpen = false;
+
+        // 3. Stop/abort SpeechRecognition so browser does not listen in the background
+        if (recognition) {
+          try { recognition.abort(); } catch (e) { }
+        }
+
+        // 5. Force the Mic Input progress bar width to 0% and label text to 0%
+        currentMicLevelPct = 0;
+        updateMicVisualizer(0);
+      } else {
+        // State is LISTENING: re-enable hardware audio tracks and open mic
+        isMicInputOpen = true;
+        const stream = micStream || mediaStream;
+        if (stream) {
+          const tracks = stream.getAudioTracks ? stream.getAudioTracks() : (stream.getTracks ? stream.getTracks() : []);
+          tracks.forEach(track => { track.enabled = true; });
+        }
+        if (callActive) {
+          if (!recognition) setupSpeechRecognition();
+          try { recognition.start(); } catch (e) { }
+        }
+      }
+
       const badge = document.getElementById("stateBadge");
       const dot = document.getElementById("stateDot");
       const label = document.getElementById("stateLabel");
@@ -788,19 +890,19 @@
       }
 
       if (badge && dot && label) {
-        if (state === "LISTENING") {
+        if (agentState === "LISTENING") {
           badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#E3ECE8] text-[#233B30] border border-[#233B30]/30";
           dot.className = "w-2.5 h-2.5 rounded-full bg-[#233B30] animate-ping";
           label.textContent = "Listening";
-        } else if (state === "THINKING") {
+        } else if (agentState === "THINKING") {
           badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]/40";
           dot.className = "w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse";
           label.textContent = "Thinking";
-        } else if (state === "SPEAKING") {
+        } else if (agentState === "SPEAKING") {
           badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F9E6E0] text-[#C86D51] border border-[#C86D51]/40";
           dot.className = "w-2.5 h-2.5 rounded-full bg-[#C86D51] animate-pulse";
           label.textContent = "Speaking";
-        } else if (state === "ERROR") {
+        } else if (agentState === "ERROR") {
           badge.className = "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FEE2E2] text-[#991B1B] border border-[#EF4444]/40";
           dot.className = "w-2.5 h-2.5 rounded-full bg-[#DC2626]";
           label.textContent = "Mic Error";
@@ -811,6 +913,10 @@
           label.textContent = "Idle — Ready";
         }
       }
+    }
+
+    function setState(state, captionText) {
+      return setAgentState(state, captionText);
     }
 
     function enterListeningMode(customMessage) {
@@ -837,10 +943,26 @@
       }
     }
 
-    // Half-Duplex: When Aria answer complete, open the mic input for the next question
+    // Turn Mic & SpeechRecognition Back ON Only After Aria Finishes Speaking
     function onAriaAnswerComplete() {
       if (!callActive) return;
-      enterListeningMode("🎙️ Listening — Speak your question...");
+      // Reset transcript buffers
+      finalTranscript = "";
+      interimTranscript = "";
+      resetRecordingTurnBuffer();
+
+      // Re-enable the microphone audio tracks
+      const stream = micStream || mediaStream;
+      if (stream) {
+        const tracks = stream.getAudioTracks ? stream.getAudioTracks() : (stream.getTracks ? stream.getTracks() : []);
+        tracks.forEach(track => { track.enabled = true; });
+      }
+
+      // Transition state to Listening
+      setAgentState("LISTENING", "🎙️ Listening — Speak naturally in English, Hindi, or Hinglish...");
+
+      // Safely start SpeechRecognition and open mic input
+      openMicInput();
     }
 
     function playAgentAudio(base64Data, mimeType, fallbackText) {
@@ -856,9 +978,12 @@
         currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
         currentAudio.onended = () => {
           currentAudio = null;
+          // 1. Wait a short 300ms echo-settle delay so room echo from laptop speakers disappears
           setTimeout(() => {
-            if (callActive && agentState === "SPEAKING") onAriaAnswerComplete();
-          }, 150);
+            if (callActive && (agentState === "SPEAKING" || agentState === "THINKING")) {
+              onAriaAnswerComplete();
+            }
+          }, 300);
         };
         currentAudio.onerror = () => speakBrowserFallback(fallbackText);
         currentAudio.play().catch(() => speakBrowserFallback(fallbackText));
@@ -869,7 +994,11 @@
 
     function speakBrowserFallback(text) {
       if (typeof window === "undefined" || !window.speechSynthesis) {
-        if (callActive) onAriaAnswerComplete();
+        if (callActive) {
+          setTimeout(() => {
+            if (callActive) onAriaAnswerComplete();
+          }, 300);
+        }
         return;
       }
       shutMicInput(); // Shut the mic input when Aria answers
@@ -880,12 +1009,17 @@
       utter.lang = "en-IN";
       utter.rate = 1.05;
       utter.onend = () => {
+        // 1. Wait a short 300ms echo-settle delay
         setTimeout(() => {
-          if (callActive && agentState === "SPEAKING") onAriaAnswerComplete();
-        }, 150);
+          if (callActive && (agentState === "SPEAKING" || agentState === "THINKING")) {
+            onAriaAnswerComplete();
+          }
+        }, 300);
       };
       utter.onerror = () => {
-        if (callActive) onAriaAnswerComplete();
+        setTimeout(() => {
+          if (callActive) onAriaAnswerComplete();
+        }, 300);
       };
       window.speechSynthesis.speak(utter);
     }
@@ -945,18 +1079,21 @@
       if (recognition) {
         recognition.onend = null;
         recognition.onerror = null;
-        try { recognition.stop(); } catch (e) {}
+        try { recognition.stop(); } catch (e) { }
       }
       if (mediaStream) {
-        try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) { }
         mediaStream = null;
+        micStream = null;
       }
       if (audioCtx && audioCtx.state !== "closed") {
-        try { audioCtx.close().catch(() => {}); } catch (e) {}
+        try { audioCtx.close().catch(() => { }); } catch (e) { }
         audioCtx = null;
       }
 
       updateMicVisualizer(0);
+      const micStatusText = document.getElementById("micStatusText");
+      if (micStatusText) micStatusText.textContent = "Hands-free voice assistant — speaks and listens automatically turn-by-turn.";
       const btnStart = document.getElementById("btnStartCall");
       const btnEnd = document.getElementById("btnEndCall");
       if (btnStart) {
@@ -1094,7 +1231,7 @@
         const summary = await res.json();
         const box = document.getElementById("summaryJsonBox");
         if (box) box.textContent = JSON.stringify(summary, null, 2);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     async function resetDemoData() {
@@ -1108,7 +1245,7 @@
       if (!box) return;
       const text = box.textContent || "";
       if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-        navigator.clipboard.writeText(text).catch(() => {});
+        navigator.clipboard.writeText(text).catch(() => { });
       }
       const btn = document.getElementById("btnCopyJson");
       if (btn) {
@@ -1125,17 +1262,26 @@
     if (typeof window !== "undefined") {
       window.startCall = startCall;
       window.endCall = endCall;
-      window.getMicLevelPercentage = () => currentMicLevelPct;
+      window.setState = setAgentState;
+      window.getMicStream = () => micStream || mediaStream;
+      window.getMicLevelPercentage = () => (agentState === "LISTENING" && isMicInputOpen) ? currentMicLevelPct : 0;
       window.setMicLevelPercentage = (pct) => {
+        if (agentState !== "LISTENING" || !isMicInputOpen) {
+          currentMicLevelPct = 0;
+          updateMicVisualizer(0);
+          return;
+        }
         currentMicLevelPct = pct;
         updateMicVisualizer(pct);
       };
       window.getLiveSpeechHint = () => liveSpeechHint;
+      window.getFinalTranscript = () => finalTranscript;
+      window.getInterimTranscript = () => interimTranscript;
       window.getIsMicInputOpen = () => isMicInputOpen;
       window.openMicInput = openMicInput;
       window.shutMicInput = shutMicInput;
       window.onAriaAnswerComplete = onAriaAnswerComplete;
-      window.handleStartListening = async function() {
+      window.handleStartListening = async function () {
         if (!callActive) {
           callActive = true;
           sessionEpoch++;
@@ -1144,7 +1290,7 @@
         }
         enterListeningMode();
       };
-      window.handleResumeListening = async function() {
+      window.handleResumeListening = async function () {
         if (liveSpeechHint.trim().length > 0) {
           const text = (sessionFinalizedSegments.length > 0)
             ? (sessionFinalizedSegments.join(" ") + " " + liveSpeechHint).trim()
@@ -1196,8 +1342,9 @@
 
     // Load initial orders table
     if (typeof fetch !== "undefined") {
-      fetch("/api/orders").then(r => r.json()).then(d => renderOrdersTable(d.orders)).catch(() => {});
+      fetch("/api/orders").then(r => r.json()).then(d => renderOrdersTable(d.orders)).catch(() => { });
     }
   </script>
 </body>
+
 </html>
