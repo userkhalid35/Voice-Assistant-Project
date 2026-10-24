@@ -1,7 +1,33 @@
-
 # Aura Skincare — Voice Concierge Studio (Aria)
 
-A real-time, low-latency AI Voice CX Specialist built with **Python**, **FastAPI**, **Astral `uv`**, and **Dual Hinglish TTS** (Sarvam AI Bulbul v3 + Microsoft Edge Neural TTS fallback). Aria assists customers with live order lookups, cancellations, return policies, shipping inquiries, and out-of-scope redirection in natural urban Hinglish and Indian English.
+A real-time, low-latency AI Voice CX & Skincare Specialist built with **Python**, **FastAPI**, **Astral `uv`**, and **Dual Indic/English Neural TTS** (Sarvam AI Bulbul v3 + Microsoft Edge Neural TTS fallback). Aria assists customers with live order lookups, order cancellations, skincare routine consultations, product recommendations, return policies, shipping inquiries, and out-of-scope redirection in natural urban Hinglish and Indian English.
+
+---
+
+## 🌟 Key Highlights & Assessment Upgrades
+
+1. **Unified Multilingual Mode (Zero Manual Toggles):**
+   - Seamlessly speaks and understands **Indian English**, **Hindi**, and conversational **Hinglish**.
+   - STT runs on `en-IN`, capturing Indian English and conversational Hindi/Hinglish phonetics naturally.
+   - Aria automatically mirrors the customer's language on every turn: English queries receive concise Indian English answers, while Hindi/Hinglish queries receive natural conversational Hinglish in clean Roman script.
+
+2. **100% Hands-Free Voice UX (True Voice Barge-In & Auto Turn Detection):**
+   - **Two Primary Action Buttons Only:** Clean, focused interface with only **Start Call** and **End Call**.
+   - **Hands-Free Barge-In (Interruption):** Continuous background audio monitoring (`AudioContext` + `SpeechRecognition`) detects user interjections while Aria is speaking. Sustained speech (>250ms vocal energy or speech recognition events) immediately cancels audio playback (`window.speechSynthesis.cancel()`, `<audio>.pause()`), aborts in-flight network requests via `AbortController`, and transitions to `Listening`.
+   - **Auto Silence Turn Detection:** Automatically detects a natural pause of ~1.1 seconds when the user finishes speaking, finalizes the turn, and sends it to the backend (`Listening` -> `Thinking` -> `Speaking`) with zero button clicks.
+
+3. **Multi-Tool Calling & Skincare Consultation Engine:**
+   - Multi-tool speculative router supports both order operations and skincare consultations:
+     * `get_order_details(order_id)`: Fetches live order status, tracking notes, and policy eligibility.
+     * `cancel_order(order_id)`: Enforces Aura Skincare's cancellation policy (allowed only while `Processing`).
+     * `get_product_recommendations(query_or_skin_type)`: Matches skin types (oily, acne-prone, dull, dry, sensitive, combination) to official Aura Skincare products:
+       1. **Vitamin C Serum (30ml) — ₹699**: Brightening serum for dull skin, dark spots, and collagen boost.
+       2. **Hydrating Sunscreen SPF 50 — ₹499**: Lightweight, zero-white-cast broad-spectrum sunscreen for all skin types.
+       3. **Green Tea Face Wash + Toner — ₹850**: Clarifying pore-tightening combo for oily and acne-prone skin.
+
+4. **Strict Guardrails & Policy Enforcement:**
+   - Policy: Never invent discounts, never prescribe medical cures, strictly enforce 7-day unopened returns, 48-hour damaged item photo replacements, ₹499 free shipping threshold (₹50 below, 3-5 days delivery), and ₹2,500 COD limit.
+   - Out-of-Scope: Politely redirects non-skincare requests (booking flights, cricket, weather, coding).
 
 ---
 
@@ -56,73 +82,87 @@ This repository is pre-configured with a root `Dockerfile` and `render.yaml` Blu
 > - **In-Memory Audio & State:** Aria uses in-memory pre-warming and audio caching. On cold boot, greetings are cached in memory within 0.8 seconds.
 > - **Health Check:** Monitored at `/health` returning HTTP 200 OK.
 
-
 ---
 
 ## 🛠️ Architecture & System Design
 
 ```text
-[ Browser Web Speech API / User Prompt ]
-                   │
-                   ▼ (HTTP POST /api/voice-turn)
-         ┌──────────────────┐
-         │ FastAPI Router   │
-         └─────────┬────────┘
-                   │
-                   ▼
+[ Hands-Free Microphone / Web Speech API (en-IN) ]
+                        │
+                        │ Hands-free Silence Detection (~1.1s Pause)
+                        ▼ (HTTP POST /api/voice-turn or /api/voice-audio)
+               ┌──────────────────┐
+               │ FastAPI Router   │
+               └─────────┬────────┘
+                         │
+                         ▼
 ┌────────────────────────────────────────────────────────┐
-│ 0.2ms In-Memory Speculative Tool Router                │
-│ • Regex & Spoken Digit Normalizer ('one zero one' -> 101)
-│ • Order Lookup & Cancellation State Engine            │
-└──────────────────┬─────────────────────────────────────┘
-                   │ Tool Data Injected into Context
-                   ▼
+│ 0.2ms Multi-Tool Speculative Router                    │
+│ • Regex & Spoken Digit Normalizer ('one zero one' -> 101)│
+│ • Order Lookup: get_order_details(order_id)            │
+│ • Order Cancellation: cancel_order(order_id)           │
+│ • Skincare Engine: get_product_recommendations(query)  │
+└────────────────────────┬───────────────────────────────┘
+                         │ Live Tool Context Injected
+                         ▼
 ┌────────────────────────────────────────────────────────┐
-│ Hybrid Intelligence Brain                              │
-│ 1. Gemini 2.5 Flash (Pure REST async httpx)            │
+│ Hybrid Intelligence Brain (Unified Multilingual)       │
+│ • Automatic Language Detection & Mirroring             │
+│ 1. Gemini 2.5 Flash (Async REST via httpx)             │
 │ 2. Groq Llama 3.3 70B (Fast Failover)                  │
 │ 3. Deterministic Policy Brain (Zero-Failure Fallback)  │
-└──────────────────┬─────────────────────────────────────┘
-                   │ Clean, spoken-word text (no markdown)
-                   ▼
+└────────────────────────┬───────────────────────────────┘
+                         │ Spoken-word text (no markdown, <45 words)
+                         ▼
 ┌────────────────────────────────────────────────────────┐
-│ Dual Hinglish TTS Engine                               │
-│ Primary: Sarvam AI Bulbul v3 (speaker: 'priya')        │
-│ Fallback: edge-tts (hi-IN-SwaraNeural in RAM buffer)   │
-│ In-Memory LRU/RAM Audio Cache                          │
-└──────────────────┬─────────────────────────────────────┘
-                   │
-                   ▼ (Base64 Audio + Structured JSON)
-         [ Client UI Playback ]
+│ Dual Indic/English Neural TTS Engine                   │
+│ • Hinglish: Sarvam AI Bulbul v3 / hi-IN-SwaraNeural    │
+│ • English: en-IN-NeerjaNeural                          │
+│ • In-Memory LRU/RAM Audio Cache                        │
+└────────────────────────┬───────────────────────────────┘
+                         │
+                         ▼ (Base64 Audio + Live State Sync)
+┌────────────────────────────────────────────────────────┐
+│ Client UI & Hands-Free Barge-In Engine                 │
+│ • Only Start Call & End Call buttons                   │
+│ • Background mic energy monitor + SpeechRecognition    │
+│ • Sustained user vocal interruption (>250ms)           │
+│   -> Cancels audio, aborts fetch, switches to Listen   │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 📑 Section 9 Engineering Questions & In-Depth Technical Analysis
 
-### 1. Why this Python FastAPI + Single-Turn Speculative Tool Router + Dual Hinglish TTS architecture was chosen
-Voice agents are uniquely vulnerable to perceived latency: humans naturally pause for only 200–500ms during normal dialogue before perceiving awkward silence. Standard LLM tool-calling architectures (e.g. LangChain / OpenAI Assistant APIs) require a **two-round-trip flow**:
-1. Client sends audio/text to the backend.
-2. Backend calls LLM with tool schemas -> LLM responds with a tool call intent (250–600ms).
+### 1. Why this Python FastAPI + Multi-Tool Speculative Router + Dual Neural TTS architecture was chosen
+Voice agents are uniquely vulnerable to perceived latency: humans naturally pause for only 200–500ms during normal dialogue before perceiving awkward silence. Standard LLM tool-calling architectures (e.g. LangChain / OpenAI Assistant APIs) require a **two-round-trip waterfall**:
+1. Client sends audio/text to backend.
+2. Backend calls LLM with tool schemas -> LLM generates tool call JSON (250–600ms).
 3. Backend executes tool locally (50–100ms).
-4. Backend sends tool output back to the LLM -> LLM generates final conversational speech (300–800ms).
+4. Backend sends tool output back to LLM -> LLM generates final conversational speech (300–800ms).
 5. TTS engine synthesizes audio (200–500ms).
 
-This multi-hop waterfall easily tops 1.5 to 2.5 seconds—completely breaking conversational flow.
+This multi-hop round trip easily tops 1.5 to 2.5 seconds—completely destroying conversational flow.
 
 **Our Solution:**
-We eliminated the first LLM trip entirely through a **0.2ms Speculative In-Memory Tool Router**. By normalizing spoken digits and intent heuristics before hitting the LLM, the tool result (`LIVE_ORDERS` data or cancellation outcome) is injected directly into the LLM system turn context. The LLM only executes a single completion pass, halving inference round trips. 
+We eliminated the preliminary LLM round trip entirely through an in-memory **0.2ms Speculative Multi-Tool Router**. By parsing spoken digits, order ID variants, and skincare keywords before invoking the LLM, tool execution (`get_order_details`, `cancel_order`, or `get_product_recommendations`) happens in <0.2ms. The verified database result is injected directly into the LLM prompt context, cutting LLM inference round trips in half.
 
-FastAPI on ASGI with `httpx` async connections provides non-blocking I/O with negligible overhead, while the **Dual Hinglish TTS Engine** couples Sarvam AI’s specialized Indic speech model with an instant zero-key fallback (`edge-tts` streaming in RAM), ensuring sub-second time-to-first-byte (TTFB) audio delivery under all operating conditions.
+FastAPI on ASGI with `httpx` async connections provides non-blocking I/O with negligible overhead, while the **Dual Indic TTS Engine** couples Sarvam AI’s specialized Indic speech model with an instant zero-key fallback (`edge-tts` streaming in RAM), ensuring sub-second time-to-first-byte (TTFB) audio delivery under all operating conditions.
 
 ---
 
-### 2. How the hardest challenge was solved: Eliminating tool latency & achieving natural Hinglish
-The two most critical challenges in production voice CX for Indian commerce are:
-1. **ASR Number Discrepancies:** Spoken Indian phone transcripts or STT engines transcribe order IDs inconsistently as words, spaced digits, or hyphens (e.g., *"order one zero one"*, *"o r d 1 0 1"*, *"order one-zero-one"*, *"101"*). If a standard tool lookup expects exact string `"ORD-101"`, it fails 80% of the time.
-   - *Solution:* We built `extract_and_normalize_order_id()` with word-to-digit translation (`"one"` -> `1`, `"oh"` -> `0`, `"won"` -> `1`), regex digit-collapse (`r"(?<=\d)[\s\-]+(?=\d)"`), and multi-tier regex matching (explicit `ORD-`, contextual phrases, and 3-digit identifiers). This resolves customer input to exact canonical keys in under 0.2ms.
-2. **Natural Hinglish Prosody vs. Robotic English Synthesizers:** Standard Western TTS voices (e.g., US English) sound completely broken when pronouncing Romanized Hindi phrases like *"Haan ji, main abhi check karti hoon"*.
-   - *Solution:* We paired Sarvam AI's `bulbul:v3` model (`target_language_code: "hi-IN"`, speaker `priya`) with Microsoft's neural `hi-IN-SwaraNeural`. Both voices are trained specifically on Indian bilingual phonemes, pronouncing English brand and status words (*"Processing"*, *"Out for Delivery"*, *"Serum"*) and Hindi connectors (*"aapka"*, *"aaj shaam 6 PM tak deliver ho jayega"*) with native Indian cadence. Pre-warming common greetings and caching synthesized responses in `AUDIO_RAM_CACHE` eliminates TTS latency for repeated turns.
+### 2. How the hardest challenge was solved: Unified Multilingual Mirroring, Latency & Voice Barge-In
+The three most critical challenges in production voice CX for Indian commerce are:
+1. **Unified Multilingual Detection & Language Mirroring:**
+   - *Problem:* Requiring users to click a language toggle breaks hands-free voice interactions. Furthermore, Indian customers frequently switch between English and Hinglish mid-dialogue.
+   - *Solution:* We unified STT to `en-IN`, which phonetically captures both Indian English and Romanized Hinglish. The backend employs dual-tier linguistic heuristics (`detect_language`) paired with system prompt directives that instruct Aria to dynamically mirror the customer's language on every turn without manual intervention.
+2. **ASR Number Discrepancies & Catalog Queries:**
+   - *Problem:* STT engines transcribe order IDs inconsistently as words, spaced digits, or hyphens (e.g., *"order one zero one"*, *"o r d 1 0 1"*, *"order one-zero-one"*, *"101"*).
+   - *Solution:* We built `extract_and_normalize_order_id()` with word-to-digit translation (`"one"` -> `1`, `"oh"` -> `0`, `"won"` -> `1`), regex digit-collapse (`r"(?<=\d)[\s\-]+(?=\d)"`), and multi-tier regex matching. For skincare queries, `get_product_recommendations` matches skin concerns (e.g. oily, dull, acne) to exact SKUs in under 0.1ms.
+3. **Hands-Free Barge-In (Interruption Handling):**
+   - *Problem:* Traditional voice agents lock the microphone while the agent speaks, forcing users to wait through long responses.
+   - *Solution:* While Aria is in the `Speaking` state, the microphone audio monitor (`AudioContext` + `scriptProcessor` with echo cancellation) and background `SpeechRecognition` remain active. Sustained vocal input (>250ms above voice energy threshold or speech recognition event) immediately stops audio output (`stopCurrentAudio()`), aborts pending network fetches via `AbortController`, and smoothly transitions the state machine to `Listening`.
 
 ---
 

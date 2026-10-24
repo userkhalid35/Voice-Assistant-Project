@@ -32,6 +32,7 @@ from app.tools_and_voice import (
 )
 
 GREETINGS = {
+    "auto": "Namaste! I am Aria from Aura Skincare support. How can I help you with your order, skincare routine, or policy questions today? Aap Hindi ya English kisi me bhi pooch sakte hain.",
     "hinglish": "Namaste! Main Aria hoon Aura Skincare customer support se. Aaj main aapke skincare order ya policy query mein kaise madad kar sakti hoon?",
     "english": "Hello! I am Aria from Aura Skincare support. How can I help you with your order or skincare questions today?",
 }
@@ -48,7 +49,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Aura Skincare Voice CX Agent", lifespan=lifespan)
+app = FastAPI(title="Aura Skincare Voice CX Agent (Aria)", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -79,8 +80,8 @@ async def reset_demo_orders():
 
 
 @app.get("/api/greeting")
-async def get_greeting(language_mode: str = "hinglish"):
-    text = GREETINGS.get(language_mode, GREETINGS["hinglish"])
+async def get_greeting(language_mode: str = "auto"):
+    text = GREETINGS.get(language_mode, GREETINGS["auto"])
     b64, mime = await synthesize_speech_base64(text, language_mode)
     return {
         "reply_text": text,

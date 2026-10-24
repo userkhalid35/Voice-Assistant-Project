@@ -149,6 +149,66 @@ class TestAriaBackend(unittest.TestCase):
         self.assertIn("customer_intent", outcome)
         self.assertIn("resolution_status", outcome)
 
+    def test_10_product_recommendations_tool_oily_skin_hinglish(self):
+        payload = {
+            "user_text": "Meri oily skin hai, kaunsa product best rahega?",
+            "history": [],
+            "language_mode": "auto",
+        }
+        res = self.client.post("/api/voice-turn", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("get_product_recommendations", data.get("tool_used", ""))
+        reply_lower = data.get("reply_text", "").lower()
+        self.assertTrue(
+            "green tea" in reply_lower
+            or "850" in reply_lower
+            or "sunscreen" in reply_lower
+            or "oil" in reply_lower
+        )
+
+    def test_11_sunscreen_product_recommendation_english(self):
+        payload = {
+            "user_text": "What is the price and SPF of your sunscreen?",
+            "history": [],
+            "language_mode": "auto",
+        }
+        res = self.client.post("/api/voice-turn", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("get_product_recommendations", data.get("tool_used", ""))
+        reply_lower = data.get("reply_text", "").lower()
+        self.assertTrue("499" in reply_lower or "spf 50" in reply_lower or "sunscreen" in reply_lower)
+
+    def test_12_out_of_scope_guardrail_redirection(self):
+        payload = {
+            "user_text": "Can you book me a flight to Goa for this weekend?",
+            "history": [],
+            "language_mode": "auto",
+        }
+        res = self.client.post("/api/voice-turn", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        reply_lower = data.get("reply_text", "").lower()
+        self.assertTrue(
+            "aura skincare" in reply_lower
+            or "order" in reply_lower
+            or "product" in reply_lower
+        )
+
+    def test_13_summary_skincare_advice(self):
+        history = [
+            {"role": "user", "text": "Meri oily skin hai, kaunsa product best rahega?"},
+            {
+                "role": "assistant",
+                "text": "Oily skin ke liye hamara Green Tea Face Wash + Toner combo (₹850) sabse best hai.",
+            },
+        ]
+        res_sum = self.client.post("/api/summary", json={"transcript": history})
+        self.assertEqual(res_sum.status_code, 200)
+        outcome = res_sum.json()
+        self.assertIn(outcome["customer_intent"], ["SKINCARE_ADVICE", "PRODUCT_INQUIRY"])
+
 
 if __name__ == "__main__":
     unittest.main()

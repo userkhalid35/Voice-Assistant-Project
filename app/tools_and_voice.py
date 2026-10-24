@@ -22,6 +22,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from app.models_and_data import (
     LIVE_ORDERS,
+    PRODUCTS_CATALOG,
     CallOutcomeJSON,
     TranscriptTurn,
     build_system_prompt,
@@ -30,6 +31,32 @@ from app.models_and_data import (
 load_dotenv()
 
 AUDIO_RAM_CACHE: dict[str, tuple[str, str]] = {}
+
+HINDI_HINGLISH_INDICATORS = {
+    "mera", "meri", "mere", "kahan", "kab", "karo", "karein", "karna", "karta", "karti",
+    "hai", "hain", "ho", "hoon", "tha", "thi", "the", "kya", "kaise", "kyun", "kaunsa",
+    "kaunsi", "kaunse", "acha", "accha", "theek", "shukriya", "dhanyawad", "namaste",
+    "batao", "bataiye", "bata", "chahiye", "radd", "wapas", "khola", "madad", "chehra",
+    "daag", "dhabbe", "dhoop", "kitne", "paisa", "rupaye", "rupayee", "din", "pehle",
+    "aaj", "shaam", "subah", "raat", "kharab", "lekin", "aur", "ya", "nahi", "nahin",
+    "abhi", "turant", "mujhe", "aapka", "aapki", "aapke", "hoga", "hogi", "dena", "liya",
+    "baat", "mein", "par", "kisi", "kuch", "suno", "sunao", "chalega"
+}
+
+
+def detect_language(text: str) -> str:
+    """Detects whether text is Hindi/Hinglish or English."""
+    if not text:
+        return "english"
+    if re.search(r"[\u0900-\u097f]", text):
+        return "hinglish"
+    lower = text.lower()
+    if "hindi" in lower or "hinglish" in lower:
+        return "hinglish"
+    words = set(re.findall(r"\b[a-zA-Z]+\b", lower))
+    if len(words.intersection(HINDI_HINGLISH_INDICATORS)) >= 1:
+        return "hinglish"
+    return "english"
 
 WORD_TO_DIGIT = {
     "zero": "0",
@@ -146,19 +173,180 @@ def cancel_order(order_id: str) -> dict[str, Any]:
         }
 
 
+def get_product_recommendations(query_or_skin_type: str) -> dict[str, Any]:
+    query = (query_or_skin_type or "").lower().strip()
+    matched = []
+
+    # 1. Vitamin C Serum
+    if any(
+        k in query
+        for k in [
+            "vitamin c",
+            "serum",
+            "brighten",
+            "glow",
+            "dull",
+            "dark spot",
+            "pigment",
+            "uneven",
+            "सीरम",
+        ]
+    ):
+        matched.append(PRODUCTS_CATALOG["vitamin-c-serum"])
+
+    # 2. Hydrating Sunscreen SPF 50
+    if any(
+        k in query
+        for k in [
+            "sunscreen",
+            "spf",
+            "sun",
+            "dhoop",
+            "tan",
+            "protect",
+            "hydration",
+            "moistur",
+            "सनस्क्रीन",
+        ]
+    ):
+        matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
+
+    # 3. Green Tea Face Wash + Toner
+    if any(
+        k in query
+        for k in [
+            "green tea",
+            "face wash",
+            "wash",
+            "toner",
+            "acne",
+            "pimple",
+            "pore",
+            "pores",
+            "cleanse",
+            "cleanser",
+            "muhase",
+            "मुंहासे",
+            "पिंपल",
+        ]
+    ):
+        matched.append(PRODUCTS_CATALOG["green-tea-combo"])
+
+    # Skin type heuristics
+    if "oily" in query or "greasy" in query or "oil" in query or "tel" in query:
+        if PRODUCTS_CATALOG["green-tea-combo"] not in matched:
+            matched.append(PRODUCTS_CATALOG["green-tea-combo"])
+        if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
+            matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
+
+    if "dry" in query or "sukhi" in query or "dehydrat" in query:
+        if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
+            matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
+        if PRODUCTS_CATALOG["vitamin-c-serum"] not in matched:
+            matched.append(PRODUCTS_CATALOG["vitamin-c-serum"])
+
+    if "combination" in query or "sensitive" in query:
+        if PRODUCTS_CATALOG["green-tea-combo"] not in matched:
+            matched.append(PRODUCTS_CATALOG["green-tea-combo"])
+        if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
+            matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
+
+    # General / Catalog / Fallback
+    if not matched or any(
+        k in query
+        for k in [
+            "catalog",
+            "all",
+            "product",
+            "routine",
+            "best",
+            "recommend",
+            "sab",
+            "kaunsa",
+        ]
+    ):
+        matched = list(PRODUCTS_CATALOG.values())
+
+    return {
+        "query": query_or_skin_type,
+        "matched_count": len(matched),
+        "products": matched,
+        "routine_tip": "Recommended routine: Purify with Green Tea Face Wash and Toner, brighten with Vitamin C Serum, and finish with Hydrating Sunscreen SPF 50 every morning.",
+    }
+
+
 def execute_fast_tool_router(
     user_text: str,
 ) -> tuple[str | None, dict[str, Any] | None]:
     lower = user_text.lower()
     order_id = extract_and_normalize_order_id(user_text)
 
-    if not order_id:
-        return None, None
+    if order_id:
+        if any(
+            k in lower
+            for k in [
+                "cancel",
+                "radd",
+                "hatana",
+                "dont want",
+                "don't want",
+                "hata do",
+                "nahi chahiye",
+            ]
+        ):
+            return f"cancel_order('{order_id}')", cancel_order(order_id)
+        return f"get_order_details('{order_id}')", get_order_details(order_id)
 
-    if any(k in lower for k in ["cancel", "radd", "hatana", "dont want", "don't want"]):
-        return f"cancel_order('{order_id}')", cancel_order(order_id)
+    # Check for Skincare / Product inquiries
+    skincare_keywords = [
+        "vitamin",
+        "serum",
+        "sunscreen",
+        "spf",
+        "face wash",
+        "toner",
+        "green tea",
+        "skin",
+        "oily",
+        "dry",
+        "acne",
+        "pimple",
+        "tan",
+        "dull",
+        "dark spot",
+        "pigment",
+        "pore",
+        "pores",
+        "glow",
+        "price",
+        "kitne ka",
+        "cost",
+        "routine",
+        "recommend",
+        "suggestion",
+        "best",
+        "kaunsa",
+        "product",
+        "products",
+        "catalog",
+        "chehra",
+        "cream",
+        "cleanser",
+        "daag",
+        "dhabbe",
+        "सीरम",
+        "सनस्क्रीन",
+    ]
+    if any(k in lower for k in skincare_keywords):
+        clean_query = user_text.strip()
+        if len(clean_query) > 50:
+            clean_query = clean_query[:50] + "..."
+        return (
+            f"get_product_recommendations('{clean_query}')",
+            get_product_recommendations(user_text),
+        )
 
-    return f"get_order_details('{order_id}')", get_order_details(order_id)
+    return None, None
 
 
 def _recognize_wav_with_sr(wav_bytes: bytes, language_mode: str = "hinglish") -> str:
@@ -285,7 +473,8 @@ def deterministic_fallback_brain(
     tool_result: dict[str, Any] | None,
 ) -> str:
     lower = user_text.lower()
-    is_hi = language_mode == "hinglish"
+    effective_lang = detect_language(user_text) if language_mode == "auto" else language_mode
+    is_hi = effective_lang == "hinglish"
 
     out_of_scope_terms = [
         "flight",
@@ -299,21 +488,59 @@ def deterministic_fallback_brain(
         "biryani",
         "stock",
         "bitcoin",
+        "code",
+        "python",
+        "math",
     ]
     if any(term in lower for term in out_of_scope_terms):
         return (
-            "Maaf kijiyega, main sirf Aura Skincare ke products, orders aur policies mein aapki madad kar sakti hoon. Kya main aapke kisi skincare order ko check karoon?"
+            "Maaf kijiyega, main sirf Aura Skincare ke products, orders aur policies mein aapki madad kar sakti hoon. Kya main aapke kisi order ya skincare query mein help karoon?"
             if is_hi
-            else "I'm sorry, I can only assist you with Aura Skincare orders, products, and policies. Would you like me to check an order for you?"
+            else "I'm sorry, I can only assist you with Aura Skincare orders, products, and policies. Would you like me to check an order or recommend a product?"
         )
 
-    if tool_result is not None:
+    # 1. Product recommendations tool result
+    if tool_result is not None and "products" in tool_result:
+        matched_prods = tool_result.get("products", [])
+        if any(w in lower for w in ["oil", "acne", "pimple", "pore", "pores", "face wash", "toner"]):
+            return (
+                "Oily aur acne-prone skin ke liye hamara Green Tea Face Wash + Toner combo (₹850) sabse best hai, jo excess oil aur pores ko control karta hai. Iske baad Hydrating Sunscreen SPF 50 (₹499) lagayein."
+                if is_hi
+                else "For oily and acne-prone skin, our Green Tea Face Wash + Toner combo (₹850) is ideal for clearing pores, paired with our lightweight Hydrating Sunscreen SPF 50 (₹499)."
+            )
+        if any(w in lower for w in ["vitamin c", "serum", "brighten", "dull", "dark spot", "pigment"]):
+            return (
+                "Dull skin aur dark spots ke liye hamara Vitamin C Serum (30ml) ₹699 ka hai. Yeh skin ko brighten karta hai aur collagen boost karta hai. Morning mein ise Sunscreen ke neeche lagayein."
+                if is_hi
+                else "For dull skin and dark spots, our Vitamin C Serum (30ml) is priced at ₹699. It brightens skin and fades pigmentation. Apply it before sunscreen in the morning."
+            )
+        if any(w in lower for w in ["sunscreen", "spf", "dhoop", "sun"]):
+            return (
+                "Hamara Hydrating Sunscreen SPF 50 ₹499 ka hai. Yeh lightweight, zero-white-cast broad-spectrum UVA aur UVB protection deta hai aur sabhi skin types ke liye suitable hai."
+                if is_hi
+                else "Our Hydrating Sunscreen SPF 50 is ₹499. It provides lightweight, no-white-cast broad-spectrum UVA and UVB protection with deep hydration for all skin types."
+            )
+        if any(w in lower for w in ["dry", "sensitive"]):
+            return (
+                "Dry aur sensitive skin ke liye Hydrating Sunscreen SPF 50 (₹499) deep moisture deta hai, aur Vitamin C Serum (₹699) glowing nourishment provide karta hai."
+                if is_hi
+                else "For dry and sensitive skin, our Hydrating Sunscreen SPF 50 (₹499) delivers deep hydration, while Vitamin C Serum (₹699) provides gentle brightening nourishment."
+            )
+        # General catalog or routine
+        return (
+            "Aura Skincare mein Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499) aur Green Tea Face Wash + Toner (₹850) available hain. Aap apni skin type batayein toh main perfect routine suggest karoon?"
+            if is_hi
+            else "Aura Skincare offers Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499), and Green Tea Face Wash + Toner (₹850). Tell me your skin type and I can recommend the right routine."
+        )
+
+    # 2. Order details / cancellation tool result
+    if tool_result is not None and "found" in tool_result:
         if not tool_result.get("found"):
             bad_id = tool_result.get("requested_id", "that ID")
             return (
                 f"Mujhe {bad_id} naam ka koi order nahi mila. Kya aap please apna Order ID dobara check karke bata sakte hain, jaise ORD-101, ORD-102 ya ORD-103?"
                 if is_hi
-                else f"I couldn't locate an order with ID {bad_id}. Could you please verify and repeat your order number?"
+                else f"I couldn't locate an order with ID {bad_id}. Could you please verify and repeat your order number, such as ORD-101, ORD-102, or ORD-103?"
             )
 
         order = tool_result["order"]
@@ -326,7 +553,7 @@ def deterministic_fallback_brain(
                 return (
                     f"Haan ji, aapka order {oid} ({prod}) abhi Processing mein tha, isliye maine ise successfully cancel kar diya hai."
                     if is_hi
-                    else f"Your order {oid} for {prod} was still Processing, so I have cancelled it for you right away."
+                    else f"Your order {oid} for {prod} was still Processing, so I have successfully cancelled it for you right away."
                 )
             else:
                 return (
@@ -366,6 +593,7 @@ def deterministic_fallback_brain(
                 else f"Your order {oid} for {prod} is currently {status}. Since it was ordered 3 hours ago, it is still eligible for cancellation if needed."
             )
 
+    # 3. Policy questions
     if any(
         w in lower
         for w in [
@@ -418,6 +646,7 @@ def deterministic_fallback_brain(
             else "Orders can only be cancelled while in Processing status. Once Shipped or Out for Delivery, they cannot be cancelled, though you may refuse doorstep delivery. Please share your Order ID so I can check."
         )
 
+    # 4. Product pricing & general info
     if any(
         w in lower
         for w in [
@@ -466,26 +695,33 @@ def deterministic_fallback_brain(
         )
 
     return (
-        "Main aapki baat sun rahi hoon! Aap apna Order ID jaise ORD-101, ORD-102, ya ORD-103 bata sakte hain, ya shipping, return aur cancellation policy ke baare mein pooch sakte hain."
+        "Main aapki baat sun rahi hoon! Aap apna Order ID jaise ORD-101 bata sakte hain, ya apni skin type ke anusaar product recommendation aur routine pooch sakte hain."
         if is_hi
-        else "I'm listening! You can share your Order ID such as ORD-101, ORD-102, or ORD-103, or ask about our shipping, return, and cancellation policies."
+        else "I'm listening! You can share your Order ID such as ORD-101, ORD-102, or ORD-103, or ask about our skincare products and routine recommendations."
     )
 
 
 async def generate_agent_reply(
     user_text: str,
     history: list[TranscriptTurn],
-    language_mode: str = "hinglish",
+    language_mode: str = "auto",
 ) -> tuple[str, str | None, dict[str, Any] | None]:
     tool_used, tool_result = execute_fast_tool_router(user_text)
-    system_prompt = build_system_prompt(language_mode)
+
+    # Determine effective language mode for prompt and mirroring
+    effective_lang = (
+        detect_language(user_text) if language_mode == "auto" else language_mode
+    )
+    system_prompt = build_system_prompt(effective_lang)
 
     tool_context = ""
     if tool_result is not None:
         tool_context = (
             f"\n\n[LIVE DATABASE TOOL RESULT for {tool_used}]:\n"
             f"{json.dumps(tool_result, ensure_ascii=False)}\n"
-            "Use this exact live tool data to answer the customer accurately and concisely."
+            "INSTRUCTION: Use this exact live tool data to answer the customer accurately and concisely. "
+            "If reporting order tracking, always mention the courier partner (e.g., BlueDart or Delhivery) and expected delivery timeline from the live notes. "
+            "If answering product/skincare advice, include the exact price and skin type benefits. Keep response under 3 short sentences."
         )
 
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -543,14 +779,19 @@ async def generate_agent_reply(
         except Exception as e:  # noqa: BLE001
             logger.debug("Groq LLM reply error: %s", e)
 
-    fallback_reply = deterministic_fallback_brain(user_text, language_mode, tool_result)
+    fallback_reply = deterministic_fallback_brain(user_text, effective_lang, tool_result)
     return fallback_reply, tool_used, tool_result
 
 
 async def synthesize_speech_base64(
-    text: str, language_mode: str = "hinglish"
+    text: str, language_mode: str = "auto"
 ) -> tuple[str | None, str]:
-    cache_key = f"{language_mode}:{text.strip()}"
+    # Determine effective language for TTS voice selection
+    effective_lang = language_mode
+    if effective_lang == "auto":
+        effective_lang = detect_language(text)
+
+    cache_key = f"{effective_lang}:{text.strip()}"
     if cache_key in AUDIO_RAM_CACHE:
         return AUDIO_RAM_CACHE[cache_key]
 
@@ -567,7 +808,7 @@ async def synthesize_speech_base64(
                     json={
                         "text": text[:2400],
                         "target_language_code": "hi-IN"
-                        if language_mode == "hinglish"
+                        if effective_lang == "hinglish"
                         else "en-IN",
                         "speaker": "priya",
                         "model": "bulbul:v3",
@@ -584,7 +825,11 @@ async def synthesize_speech_base64(
         except Exception as e:  # noqa: BLE001
             logger.debug("Sarvam TTS error: %s", e)
 
-    voice = "hi-IN-SwaraNeural" if language_mode == "hinglish" else "en-IN-NeerjaNeural"
+    voice = (
+        "hi-IN-SwaraNeural"
+        if effective_lang == "hinglish"
+        else "en-IN-NeerjaNeural"
+    )
     try:
         communicate = edge_tts.Communicate(text, voice, rate="+6%")
         buffer = io.BytesIO()
@@ -629,6 +874,40 @@ async def build_structured_summary(transcript: list[TranscriptTurn]) -> CallOutc
         w in lower_user for w in ["where", "track", "status", "kahan", "kab"]
     ):
         intent = "ORDER_TRACKING"
+    elif any(
+        w in lower_user
+        for w in [
+            "oily",
+            "acne",
+            "pimple",
+            "dry",
+            "sensitive",
+            "routine",
+            "tan",
+            "pore",
+            "pores",
+            "kaunsa",
+        ]
+    ):
+        intent = "SKINCARE_ADVICE"
+    elif any(
+        w in lower_user
+        for w in [
+            "vitamin c",
+            "serum",
+            "sunscreen",
+            "spf",
+            "face wash",
+            "toner",
+            "green tea",
+            "price",
+            "catalog",
+            "cost",
+            "kitne ka",
+            "products",
+        ]
+    ):
+        intent = "PRODUCT_INQUIRY"
     elif any(w in lower_user for w in ["shipping", "cod", "policy", "delivery"]):
         intent = "POLICY_INQUIRY"
 
@@ -637,7 +916,7 @@ async def build_structured_summary(transcript: list[TranscriptTurn]) -> CallOutc
         try:
             prompt = (
                 "Analyze this Aura Skincare customer support transcript and return ONLY a raw JSON object with keys: "
-                "customer_intent (one of ORDER_TRACKING, CANCELLATION_REQUEST, RETURN_REQUEST, POLICY_INQUIRY, OUT_OF_SCOPE), "
+                "customer_intent (one of ORDER_TRACKING, CANCELLATION_REQUEST, RETURN_REQUEST, POLICY_INQUIRY, PRODUCT_INQUIRY, SKINCARE_ADVICE, OUT_OF_SCOPE), "
                 "order_id (string like 'ORD-101' or null), "
                 "resolution_status (one of RESOLVED, REJECTED_BY_POLICY, UNRESOLVED), "
                 "call_summary (concise 1-2 sentence English summary of the call outcome).\n\n"
@@ -681,6 +960,10 @@ async def build_structured_summary(transcript: list[TranscriptTurn]) -> CallOutc
             summary_text = f"Customer requested cancellation for {detected_order}. Politely declined as order status is '{o['status']}' and advised doorstep refusal."
     elif intent == "RETURN_REQUEST":
         summary_text = "Customer requested a product return. Agent enforced Aura Skincare's 7-day unopened return policy."
+    elif intent == "PRODUCT_INQUIRY":
+        summary_text = "Customer inquired about Aura Skincare product catalog and pricing. Agent provided accurate product details."
+    elif intent == "SKINCARE_ADVICE":
+        summary_text = "Customer asked for personalized skincare advice and routine recommendations. Agent provided tailored product guidance based on skin type."
     elif intent == "OUT_OF_SCOPE":
         summary_text = "Customer made an out-of-scope request unrelated to Aura Skincare. Agent politely redirected to Aura Skincare support topics."
     elif intent == "POLICY_INQUIRY":
