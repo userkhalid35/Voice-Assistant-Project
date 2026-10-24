@@ -290,6 +290,8 @@
     let currentTurnFinalText = "";
 
     // Silence threshold for automatic turn finalization (1.1 seconds)
+    const BARGE_IN_THRESHOLD = 20; // 20% mic input threshold for barge-in
+    const SPEAKER_GRACE_PERIOD_MS = 400; // 400ms initial speaker grace period
     const SILENCE_AFTER_SPEECH_MS = 1100;
     const MAX_AUTO_RECORD_MS = 7000;
 
@@ -301,9 +303,9 @@
       recognition.interimResults = true;
       recognition.lang = (languageMode === "hinglish") ? "hi-IN" : "en-IN";
 
-      // Ignore onspeechstart while Aria is speaking unless vocal volume is >= 40%
+      // Ignore onspeechstart while Aria is speaking unless vocal volume is >= 20%
       recognition.onspeechstart = () => {
-        if (agentState === "SPEAKING" && currentMicLevelPct < 40) {
+        if (agentState === "SPEAKING" && currentMicLevelPct < BARGE_IN_THRESHOLD) {
           return;
         }
       };
@@ -325,22 +327,22 @@
 
         const cleanSpeech = fullTranscript.trim();
 
-        // While Aria is Speaking, strictly enforce barge-in rules:
-        // 1. Disallow during 600ms grace window
-        // 2. Discard single-character or short noise hallucinations (must be > 3 characters)
-        // 3. Require vocal volume > 35% before triggering barge-in
+        // While Aria is Speaking:
+        // No Background Transcription During Speaking (micLevel < 20% or within 400ms grace period):
+        // Completely block SpeechRecognition from accumulating transcripts, updating the live transcript UI,
+        // starting silence timers, or submitting turns in the background.
         if (agentState === "SPEAKING") {
           const elapsedSpeaking = getNow() - ariaSpeakingStartTime;
-          if (elapsedSpeaking < 600) {
+          if (elapsedSpeaking < SPEAKER_GRACE_PERIOD_MS || currentMicLevelPct < BARGE_IN_THRESHOLD) {
             return;
           }
-          if (cleanSpeech.length <= 3) {
+          // Catch the Very First Words on Barge-In (micLevel >= 20%):
+          // Immediately flip state from Speaking to Listening and stop Aria's audio without stopping recognition.
+          const interrupted = handleBargeIn(false);
+          if (!interrupted) {
             return;
           }
-          if (currentMicLevelPct > 35) {
-            handleBargeIn(false);
-          }
-          return;
+          // Do NOT return here! Keep recognition hot and immediately accept cleanSpeech into the listening turn so zero words are lost!
         }
 
         if (agentState !== "LISTENING" || isSubmittingTurn) return;
@@ -432,7 +434,7 @@
       // Track rolling ambientNoiseFloor when user is not actively speaking
       if (agentState === "LISTENING" && !hasSpokenInTurn) {
         ambientNoiseFloor = ambientNoiseFloor * 0.95 + voiceBandEnergy * 0.05;
-      } else if (agentState === "IDLE" || (agentState === "SPEAKING" && (now - ariaSpeakingStartTime < 600))) {
+      } else if (agentState === "IDLE" || (agentState === "SPEAKING" && (now - ariaSpeakingStartTime < SPEAKER_GRACE_PERIOD_MS))) {
         ambientNoiseFloor = ambientNoiseFloor * 0.98 + voiceBandEnergy * 0.02;
       }
 
@@ -442,12 +444,14 @@
       // 2. User must produce vocal input above 40% continuously for at least 250ms
       if (agentState === "SPEAKING") {
         const elapsedSpeaking = now - ariaSpeakingStartTime;
-        if (elapsedSpeaking >= 600 && currentMicLevelPct >= 40) {
+        if (elapsedSpeaking >= SPEAKER_GRACE_PERIOD_MS && currentMicLevelPct >= BARGE_IN_THRESHOLD) {
+          consecutiveVoiceFrames++;
           if (!voiceEnergyStartTime) {
             voiceEnergyStartTime = now;
           }
           const sustainedDuration = now - voiceEnergyStartTime;
-          if (sustainedDuration >= 250) {
+          if (sustainedDuration >= 100 || consecutiveVoiceFrames >= 3) {
+            consecutiveVoiceFrames = 0;
             voiceEnergyStartTime = 0;
             handleBargeIn(false);
           }
@@ -666,16 +670,16 @@
 
     // Hands-Free Voice Interruption (Barge-In)
     function handleBargeIn(force = false) {
-      if (!callActive) return;
-      if (agentState !== "SPEAKING" && agentState !== "THINKING") return;
+      if (!callActive) return false;
+      if (agentState !== "SPEAKING" && agentState !== "THINKING") return false;
 
-      // 600ms Echo Grace Window and strict volume gate for automatic triggers
+      // 400ms Echo Grace Window and volume gate for automatic triggers
       if (!force && agentState === "SPEAKING") {
-        if (getNow() - ariaSpeakingStartTime < 600) {
-          return;
+        if (getNow() - ariaSpeakingStartTime < SPEAKER_GRACE_PERIOD_MS) {
+          return false;
         }
-        if (currentMicLevelPct < 35) {
-          return;
+        if (currentMicLevelPct < BARGE_IN_THRESHOLD) {
+          return false;
         }
       }
 
@@ -688,10 +692,13 @@
         currentTurnAbortController = null;
       }
 
-      // 3. Immediately switch state from Speaking/Thinking to Listening
+      // 3. Immediately switch state from Speaking/Thinking to Listening without restarting recognition
       consecutiveVoiceFrames = 0;
       voiceEnergyStartTime = 0;
-      enterListeningMode("🎙️ Aria stopped — Listening to your query...");
+      pcmChunks = [];
+      hasSpokenInTurn = false;
+      setAgentState("LISTENING", "🎙️ Aria stopped — Listening to your query...");
+      return true;
     }
 
     // Hands-Free Turn Finalization on 1.1s Pause
@@ -1137,6 +1144,9 @@
         currentMicLevelPct = pct;
         updateMicVisualizer(pct);
       };
+      window.getLiveSpeechHint = () => liveSpeechHint;
+      window.getBargeInThreshold = () => BARGE_IN_THRESHOLD;
+      window.getSpeakerGracePeriodMs = () => SPEAKER_GRACE_PERIOD_MS;
       window.handleStartListening = async function() {
         if (!callActive) {
           callActive = true;
