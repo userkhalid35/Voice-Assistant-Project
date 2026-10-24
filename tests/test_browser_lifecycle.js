@@ -196,9 +196,13 @@ function createEnvironment() {
     },
     navigator: {
       mediaDevices: {
-        getUserMedia: async () => ({
-          getTracks: () => [{ stop: () => {} }]
-        })
+        getUserMedia: async () => {
+          const track = { stop: () => {}, enabled: true };
+          return {
+            getTracks: () => [track],
+            getAudioTracks: () => [track]
+          };
+        }
       },
       clipboard: {
         writeText: () => Promise.resolve()
@@ -503,64 +507,51 @@ async function runTests() {
     console.log("  ✓ Passed: Manual text submission works cleanly and preserves API contract.");
   }
 
-  // TEST 13: 20% Barge-In Threshold, No Background Transcription & Opening Words Capture
+  // TEST 13: Half-Duplex Turn Control (Mic Shut During Aria's Answer & Opened on Completion)
   {
-    console.log("\nTest 13: Anti-noise barge-in enforces 20% threshold, blocks background listening, and captures opening words on barge-in...");
+    console.log("\nTest 13: Half-duplex turn control: mic is shut after getting voice, remains shut while Aria answers, and re-opens when answer is complete...");
     const { win } = createEnvironment();
 
+    // 1. Start listening: mic input is open
     await win.handleStartListening();
+    assert.strictEqual(win.getTurnState(), "LISTENING", "Assistant must be in LISTENING state");
+    assert.strictEqual(win.getIsMicInputOpen(), true, "Mic input must be open while waiting for user question");
+
+    // 2. User speaks: captured cleanly in listening state
     const rec = MockSpeechRecognition.instances[0];
-    rec.onresult(createResultEvent([{ transcript: "Where is my order?", isFinal: true }]));
+    rec.onresult(createResultEvent([{ transcript: "Where is my order ORD-101?", isFinal: true }]));
+    assert.strictEqual(win.getLiveSpeechHint(), "Where is my order ORD-101?", "Spoken words must be captured");
+
+    // 3. User finishes speaking and turn is submitted: mic input must be immediately SHUT
     await win.handleResumeListening();
-
+    assert.strictEqual(win.getIsMicInputOpen(), false, "Mic input must be shut after getting the voice query");
     assert.strictEqual(win.getTurnState(), "SPEAKING", "Assistant must be in SPEAKING state");
-    assert.strictEqual(win.getLiveSpeechHint(), "", "Live speech hint must be empty when Aria starts speaking");
 
-    // Case A: Mic input below 20% (e.g. 5%, 10%, 18%) during Speaking:
-    // 1. Must NOT switch to Listening (remains SPEAKING)
-    // 2. Must NOT transcribe in background (liveSpeechHint remains empty)
-    win.setMicLevelPercentage(10);
-    rec.onresult(createResultEvent([{ transcript: "Quiet whisper or ambient fan noise", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Mic input below 20% (10%) must NOT switch state to LISTENING");
-    assert.strictEqual(win.getLiveSpeechHint(), "", "Mic input below 20% must NOT transcribe in the background");
+    // 4. Any ambient noise or recognition events while Aria is answering must be completely blocked
+    rec.onresult(createResultEvent([{ transcript: "Background laptop speaker sound", isFinal: false }]));
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Aria speaking must NOT be interrupted by background noise");
+    assert.strictEqual(win.getLiveSpeechHint(), "", "Live transcript must not record background audio while Aria answers");
+    assert.strictEqual(win.getIsMicInputOpen(), false, "Mic input must remain shut throughout Aria answering");
 
-    win.setMicLevelPercentage(18);
-    rec.onresult(createResultEvent([{ transcript: "More noise under twenty percent", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Mic input 18% must NOT switch state to LISTENING");
-    assert.strictEqual(win.getLiveSpeechHint(), "", "Mic input 18% must NOT transcribe in the background");
+    // 5. When Aria answer is complete, mic input is opened again
+    win.onAriaAnswerComplete();
+    assert.strictEqual(win.getTurnState(), "LISTENING", "State must return to LISTENING when Aria finishes speaking");
+    assert.strictEqual(win.getIsMicInputOpen(), true, "Mic input must open when Aria completes her answer");
 
-    // Case B: Speech within the 400ms echo grace window must NOT interrupt
-    win.setMicLevelPercentage(25);
-    rec.onresult(createResultEvent([{ transcript: "Hello wait", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Interruption within 400ms grace window must be ignored");
-    assert.strictEqual(win.getLiveSpeechHint(), "", "Speech within 400ms grace window must NOT transcribe in the background");
+    // 6. User can immediately speak their next query without issue
+    rec.onresult(createResultEvent([{ transcript: "Can I cancel ORD-103?", isFinal: true }]));
+    assert.strictEqual(win.getLiveSpeechHint(), "Can I cancel ORD-103?", "Next query must be captured cleanly");
 
-    // Wait until past the 400ms echo grace window
-    await new Promise(r => setTimeout(r, 450));
+    // 7. Test manual interruption: clicking interrupt stops Aria and immediately opens mic
+    await win.handleResumeListening();
+    assert.strictEqual(win.getTurnState(), "SPEAKING");
+    assert.strictEqual(win.getIsMicInputOpen(), false, "Mic shut during second turn answer");
 
-    // Case C: Ambient noise below 20% after 400ms must still NOT interrupt or transcribe in background
-    win.setMicLevelPercentage(12);
-    rec.onresult(createResultEvent([{ transcript: "Late ambient noise", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Speech with low mic level (< 20%) after 400ms must be blocked by volume gate");
-    assert.strictEqual(win.getLiveSpeechHint(), "", "Speech with low mic level (< 20%) after 400ms must NOT transcribe");
+    win.handleInterrupt();
+    assert.strictEqual(win.getTurnState(), "LISTENING", "Manual interrupt transitions immediately to LISTENING");
+    assert.strictEqual(win.getIsMicInputOpen(), true, "Manual interrupt immediately re-opens mic input");
 
-    // Record stop/abort counts prior to barge-in
-    const stopCountBefore = MockSpeechRecognition.stopCount;
-    const abortCountBefore = MockSpeechRecognition.abortCount;
-
-    // Case D: Real vocal speech with mic level >= 20% MUST trigger barge-in immediately
-    // AND capture opening words without dropping them!
-    win.setMicLevelPercentage(25);
-    rec.onresult(createResultEvent([{ transcript: "Wait, cancel that order!", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "LISTENING", "Verified vocal speech >= 20% after 400ms grace window must trigger barge-in");
-    assert.strictEqual(win.getIsAriaSpeaking(), false, "Aria audio playback must be stopped immediately");
-    assert.strictEqual(win.getLiveSpeechHint(), "Wait, cancel that order!", "First words of user must be captured immediately on barge-in without being dropped");
-
-    // Verify recognition instance was kept hot and NOT stopped/aborted
-    assert.strictEqual(MockSpeechRecognition.stopCount, stopCountBefore, "recognition.stop() must NOT be called during barge-in");
-    assert.strictEqual(MockSpeechRecognition.abortCount, abortCountBefore, "recognition.abort() must NOT be called during barge-in");
-
-    console.log("  ✓ Passed: 20% threshold enforced, background listening blocked, and opening words captured cleanly.");
+    console.log("  ✓ Passed: Mic shuts during answer, opens upon completion, and opens on interrupt.");
   }
 
   console.log("\n==============================================");

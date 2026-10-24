@@ -290,10 +290,48 @@
     let currentTurnFinalText = "";
 
     // Silence threshold for automatic turn finalization (1.1 seconds)
-    const BARGE_IN_THRESHOLD = 20; // 20% mic input threshold for barge-in
-    const SPEAKER_GRACE_PERIOD_MS = 400; // 400ms initial speaker grace period
     const SILENCE_AFTER_SPEECH_MS = 1100;
     const MAX_AUTO_RECORD_MS = 7000;
+
+    // Mic Input State Machine (Half-Duplex Turn-Taking):
+    // 1. When user finishes speaking: shut mic input immediately during THINKING and SPEAKING.
+    // 2. While Aria is answering: mic input remains 100% shut so no speaker output or ambient noise disturbs Aria.
+    // 3. When Aria completes answering: open mic input and enter LISTENING state.
+    let isMicInputOpen = false;
+
+    function openMicInput() {
+      isMicInputOpen = true;
+      if (mediaStream) {
+        const tracks = mediaStream.getAudioTracks ? mediaStream.getAudioTracks() : (mediaStream.getTracks ? mediaStream.getTracks() : []);
+        tracks.forEach(t => { t.enabled = true; });
+      }
+      const micStatusDot = document.getElementById("micStatusDot");
+      const micStatusText = document.getElementById("micStatusText");
+      if (micStatusDot) micStatusDot.className = "w-2 h-2 rounded-full bg-[#10B981] animate-pulse";
+      if (micStatusText) micStatusText.textContent = "Mic Open";
+
+      if (callActive && agentState === "LISTENING") {
+        if (!recognition) setupSpeechRecognition();
+        try { recognition.start(); } catch (e) {}
+      }
+    }
+
+    function shutMicInput() {
+      isMicInputOpen = false;
+      if (mediaStream) {
+        const tracks = mediaStream.getAudioTracks ? mediaStream.getAudioTracks() : (mediaStream.getTracks ? mediaStream.getTracks() : []);
+        tracks.forEach(t => { t.enabled = false; });
+      }
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+      }
+      currentMicLevelPct = 0;
+      updateMicVisualizer(0);
+      const micStatusDot = document.getElementById("micStatusDot");
+      const micStatusText = document.getElementById("micStatusText");
+      if (micStatusDot) micStatusDot.className = "w-2 h-2 rounded-full bg-[#92400E]";
+      if (micStatusText) micStatusText.textContent = "Mic Shut (Aria Answering)";
+    }
 
     function setupSpeechRecognition() {
       const SR = (typeof window !== "undefined") ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
@@ -303,15 +341,17 @@
       recognition.interimResults = true;
       recognition.lang = (languageMode === "hinglish") ? "hi-IN" : "en-IN";
 
-      // Ignore onspeechstart while Aria is speaking unless vocal volume is >= 20%
+      // When mic is shut or Aria is speaking/thinking, ignore onspeechstart
       recognition.onspeechstart = () => {
-        if (agentState === "SPEAKING" && currentMicLevelPct < BARGE_IN_THRESHOLD) {
+        if (!isMicInputOpen || agentState !== "LISTENING") {
           return;
         }
       };
 
       recognition.onresult = (event) => {
-        if (!callActive) return;
+        if (!callActive || !isMicInputOpen || agentState !== "LISTENING" || isSubmittingTurn) {
+          return;
+        }
 
         let fullTranscript = "";
         currentTurnFinalText = "";
@@ -326,27 +366,6 @@
         }
 
         const cleanSpeech = fullTranscript.trim();
-
-        // While Aria is Speaking:
-        // No Background Transcription During Speaking (micLevel < 20% or within 400ms grace period):
-        // Completely block SpeechRecognition from accumulating transcripts, updating the live transcript UI,
-        // starting silence timers, or submitting turns in the background.
-        if (agentState === "SPEAKING") {
-          const elapsedSpeaking = getNow() - ariaSpeakingStartTime;
-          if (elapsedSpeaking < SPEAKER_GRACE_PERIOD_MS || currentMicLevelPct < BARGE_IN_THRESHOLD) {
-            return;
-          }
-          // Catch the Very First Words on Barge-In (micLevel >= 20%):
-          // Immediately flip state from Speaking to Listening and stop Aria's audio without stopping recognition.
-          const interrupted = handleBargeIn(false);
-          if (!interrupted) {
-            return;
-          }
-          // Do NOT return here! Keep recognition hot and immediately accept cleanSpeech into the listening turn so zero words are lost!
-        }
-
-        if (agentState !== "LISTENING" || isSubmittingTurn) return;
-
         if (cleanSpeech.length > 0) {
           liveSpeechHint = cleanSpeech;
           hasSpokenInTurn = true;
@@ -378,10 +397,10 @@
         if (currentTurnFinalText && !sessionFinalizedSegments.includes(currentTurnFinalText)) {
           sessionFinalizedSegments.push(currentTurnFinalText);
         }
-        // Auto-restart recognition session across natural browser pauses while call is active
-        if (callActive && (agentState === "LISTENING" || agentState === "SPEAKING") && !isSubmittingTurn) {
+        // Auto-restart recognition session ONLY when call is active, agent is in LISTENING state, and mic is open
+        if (callActive && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
           setTimeout(() => {
-            if (callActive && (agentState === "LISTENING" || agentState === "SPEAKING") && !isSubmittingTurn) {
+            if (callActive && agentState === "LISTENING" && isMicInputOpen && !isSubmittingTurn) {
               setupSpeechRecognition();
               try { recognition.start(); } catch (e) {}
             }
@@ -421,7 +440,7 @@
 
     // Audio Monitoring Step for Voice Frequency Analysis & Barge-In Detection
     function audioMonitorStep() {
-      if (!callActive) return;
+      if (!callActive || !isMicInputOpen || agentState !== "LISTENING") return;
       const now = getNow();
       const voiceBandEnergy = getHumanVoiceBandEnergy();
 
@@ -434,32 +453,6 @@
       // Track rolling ambientNoiseFloor when user is not actively speaking
       if (agentState === "LISTENING" && !hasSpokenInTurn) {
         ambientNoiseFloor = ambientNoiseFloor * 0.95 + voiceBandEnergy * 0.05;
-      } else if (agentState === "IDLE" || (agentState === "SPEAKING" && (now - ariaSpeakingStartTime < SPEAKER_GRACE_PERIOD_MS))) {
-        ambientNoiseFloor = ambientNoiseFloor * 0.98 + voiceBandEnergy * 0.02;
-      }
-
-      // Requirement 1: Strict Volume Gate & Sustained Interruption Check
-      // While Aria is Speaking:
-      // 1. Disallow interruption during the first 600ms grace window
-      // 2. User must produce vocal input above 40% continuously for at least 250ms
-      if (agentState === "SPEAKING") {
-        const elapsedSpeaking = now - ariaSpeakingStartTime;
-        if (elapsedSpeaking >= SPEAKER_GRACE_PERIOD_MS && currentMicLevelPct >= BARGE_IN_THRESHOLD) {
-          consecutiveVoiceFrames++;
-          if (!voiceEnergyStartTime) {
-            voiceEnergyStartTime = now;
-          }
-          const sustainedDuration = now - voiceEnergyStartTime;
-          if (sustainedDuration >= 100 || consecutiveVoiceFrames >= 3) {
-            consecutiveVoiceFrames = 0;
-            voiceEnergyStartTime = 0;
-            handleBargeIn(false);
-          }
-        } else {
-          voiceEnergyStartTime = 0;
-        }
-      } else {
-        voiceEnergyStartTime = 0;
       }
     }
 
@@ -516,6 +509,11 @@
         if (scriptProcessor) {
           scriptProcessor.onaudioprocess = (event) => {
             if (!callActive) return;
+            if (!isMicInputOpen || agentState !== "LISTENING" || isSubmittingTurn) {
+              currentMicLevelPct = 0;
+              updateMicVisualizer(0);
+              return;
+            }
             audioMonitorStep();
             const input = event.inputBuffer.getChannelData(0);
 
@@ -528,8 +526,6 @@
             const pct = Math.min(100, Math.round(Math.max(rms * 400, (voiceBandEnergy / 255) * 100)));
             currentMicLevelPct = pct;
             updateMicVisualizer(pct);
-
-            if (agentState !== "LISTENING" || isSubmittingTurn) return;
 
             const now = getNow();
 
@@ -668,20 +664,10 @@
       voiceEnergyStartTime = 0;
     }
 
-    // Hands-Free Voice Interruption (Barge-In)
+    // Interruption Handler
     function handleBargeIn(force = false) {
       if (!callActive) return false;
       if (agentState !== "SPEAKING" && agentState !== "THINKING") return false;
-
-      // 400ms Echo Grace Window and volume gate for automatic triggers
-      if (!force && agentState === "SPEAKING") {
-        if (getNow() - ariaSpeakingStartTime < SPEAKER_GRACE_PERIOD_MS) {
-          return false;
-        }
-        if (currentMicLevelPct < BARGE_IN_THRESHOLD) {
-          return false;
-        }
-      }
 
       // 1. Immediately cancel active audio playback
       stopCurrentAudio();
@@ -692,12 +678,8 @@
         currentTurnAbortController = null;
       }
 
-      // 3. Immediately switch state from Speaking/Thinking to Listening without restarting recognition
-      consecutiveVoiceFrames = 0;
-      voiceEnergyStartTime = 0;
-      pcmChunks = [];
-      hasSpokenInTurn = false;
-      setAgentState("LISTENING", "🎙️ Aria stopped — Listening to your query...");
+      // 3. Immediately switch state to Listening and open mic input
+      enterListeningMode("🎙️ Aria stopped — Listening to your query...");
       return true;
     }
 
@@ -715,6 +697,7 @@
 
       if (pcmChunks.length === 0) return;
       isSubmittingTurn = true;
+      shutMicInput();
 
       const sampleRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 44100;
       const wavBase64 = encodeWavBase64(pcmChunks, sampleRate);
@@ -832,14 +815,13 @@
 
     function enterListeningMode(customMessage) {
       if (!callActive) {
+        shutMicInput();
         setAgentState("IDLE", "Call ended.");
         return;
       }
       resetRecordingTurnBuffer();
       setAgentState("LISTENING", customMessage || "🎙️ Listening — Speak naturally in English, Hindi, or Hinglish...");
-      if (recognition) {
-        try { recognition.start(); } catch (e) {}
-      }
+      openMicInput();
     }
 
     function stopCurrentAudio() {
@@ -855,7 +837,14 @@
       }
     }
 
+    // Half-Duplex: When Aria answer complete, open the mic input for the next question
+    function onAriaAnswerComplete() {
+      if (!callActive) return;
+      enterListeningMode("🎙️ Listening — Speak your question...");
+    }
+
     function playAgentAudio(base64Data, mimeType, fallbackText) {
+      shutMicInput(); // Shut the mic input when Aria answers
       stopCurrentAudio();
       resetRecordingTurnBuffer();
       ariaSpeakingStartTime = getNow();
@@ -863,17 +852,12 @@
       voiceEnergyStartTime = 0;
       setAgentState("SPEAKING", `Aria: "${fallbackText}"`);
 
-      // Ensure speech recognition is running in the background for live hands-free barge-in
-      if (recognition && !recognition.started) {
-        try { recognition.start(); } catch (e) {}
-      }
-
       if (base64Data && typeof Audio !== "undefined") {
         currentAudio = new Audio(`data:${mimeType};base64,${base64Data}`);
         currentAudio.onended = () => {
           currentAudio = null;
           setTimeout(() => {
-            if (callActive && agentState === "SPEAKING") enterListeningMode();
+            if (callActive && agentState === "SPEAKING") onAriaAnswerComplete();
           }, 150);
         };
         currentAudio.onerror = () => speakBrowserFallback(fallbackText);
@@ -885,9 +869,10 @@
 
     function speakBrowserFallback(text) {
       if (typeof window === "undefined" || !window.speechSynthesis) {
-        if (callActive) enterListeningMode();
+        if (callActive) onAriaAnswerComplete();
         return;
       }
+      shutMicInput(); // Shut the mic input when Aria answers
       ariaSpeakingStartTime = getNow();
       consecutiveVoiceFrames = 0;
       voiceEnergyStartTime = 0;
@@ -896,10 +881,12 @@
       utter.rate = 1.05;
       utter.onend = () => {
         setTimeout(() => {
-          if (callActive && agentState === "SPEAKING") enterListeningMode();
+          if (callActive && agentState === "SPEAKING") onAriaAnswerComplete();
         }, 150);
       };
-      utter.onerror = () => enterListeningMode();
+      utter.onerror = () => {
+        if (callActive) onAriaAnswerComplete();
+      };
       window.speechSynthesis.speak(utter);
     }
 
@@ -926,10 +913,7 @@
       if (!micOk) return;
 
       startAudioMonitoring();
-
-      if (recognition) {
-        try { recognition.start(); } catch (e) {}
-      }
+      shutMicInput();
 
       try {
         const res = await fetch(`/api/greeting?language_mode=${languageMode}`);
@@ -940,13 +924,14 @@
         renderTranscript();
         playAgentAudio(data.audio_base64, data.audio_mime, data.reply_text);
       } catch (err) {
-        if (callActive) enterListeningMode();
+        if (callActive) onAriaAnswerComplete();
       }
     }
 
     function endCall() {
       callActive = false;
       sessionEpoch++;
+      shutMicInput();
       stopAudioMonitoring();
       stopCurrentAudio();
       resetRecordingTurnBuffer();
@@ -986,6 +971,7 @@
     async function sendUserTextTurn(userText) {
       if (!userText.trim() || isSubmittingTurn || !callActive) return;
       isSubmittingTurn = true;
+      shutMicInput();
       stopCurrentAudio();
       if (hintSilenceTimer) clearTimeout(hintSilenceTimer);
 
@@ -1042,7 +1028,7 @@
       } catch (e) {
         isSubmittingTurn = false;
         if (callActive && e.name !== "AbortError") {
-          enterListeningMode();
+          onAriaAnswerComplete();
         }
       }
     }
@@ -1145,17 +1131,16 @@
         updateMicVisualizer(pct);
       };
       window.getLiveSpeechHint = () => liveSpeechHint;
-      window.getBargeInThreshold = () => BARGE_IN_THRESHOLD;
-      window.getSpeakerGracePeriodMs = () => SPEAKER_GRACE_PERIOD_MS;
+      window.getIsMicInputOpen = () => isMicInputOpen;
+      window.openMicInput = openMicInput;
+      window.shutMicInput = shutMicInput;
+      window.onAriaAnswerComplete = onAriaAnswerComplete;
       window.handleStartListening = async function() {
         if (!callActive) {
           callActive = true;
           sessionEpoch++;
           await ensureMicrophoneStream();
           startAudioMonitoring();
-          if (recognition) {
-            try { recognition.start(); } catch (e) {}
-          }
         }
         enterListeningMode();
       };
@@ -1187,6 +1172,7 @@
       };
       window.finishAriaSpeaking = (epoch) => {
         stopCurrentAudio();
+        shutMicInput();
         setAgentState("IDLE", "Aria finished speaking.");
       };
       window.getSessionEpoch = () => sessionEpoch;
