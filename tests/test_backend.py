@@ -1,8 +1,10 @@
 import unittest
+
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models_and_data import LIVE_ORDERS, reset_orders, VoiceTurnRequest, VoiceTurnResponse
+from app.models_and_data import reset_orders
+
 
 class TestAriaBackend(unittest.TestCase):
     def setUp(self):
@@ -43,7 +45,7 @@ class TestAriaBackend(unittest.TestCase):
         payload = {
             "user_text": "Mera order ORD-101 kahan pahuncha hai?",
             "history": [],
-            "language_mode": "hinglish"
+            "language_mode": "hinglish",
         }
         res = self.client.post("/api/voice-turn", json=payload)
         self.assertEqual(res.status_code, 200)
@@ -57,7 +59,7 @@ class TestAriaBackend(unittest.TestCase):
         payload = {
             "user_text": "Please cancel my order ORD-103 immediately",
             "history": [],
-            "language_mode": "english"
+            "language_mode": "english",
         }
         res = self.client.post("/api/voice-turn", json=payload)
         self.assertEqual(res.status_code, 200)
@@ -65,7 +67,9 @@ class TestAriaBackend(unittest.TestCase):
         self.assertIn("cancel_order", data.get("tool_used", ""))
         self.assertIn("cancel", data.get("reply_text", "").lower())
         # Check order status changed in returned orders table
-        ord_103 = next((o for o in data.get("orders", []) if o["order_id"] == "ORD-103"), None)
+        ord_103 = next(
+            (o for o in data.get("orders", []) if o["order_id"] == "ORD-103"), None
+        )
         self.assertIsNotNone(ord_103)
         self.assertEqual(ord_103["status"], "Cancelled")
 
@@ -73,23 +77,29 @@ class TestAriaBackend(unittest.TestCase):
         payload = {
             "user_text": "Cancel my order ORD-101",
             "history": [],
-            "language_mode": "english"
+            "language_mode": "english",
         }
         res = self.client.post("/api/voice-turn", json=payload)
         self.assertEqual(res.status_code, 200)
         data = res.json()
         # Out for delivery cannot be cancelled
         reply_lower = data.get("reply_text", "").lower()
-        self.assertTrue("out for delivery" in reply_lower or "processing" in reply_lower or "cannot" in reply_lower)
+        self.assertTrue(
+            "out for delivery" in reply_lower
+            or "processing" in reply_lower
+            or "cannot" in reply_lower
+        )
         # Verify status remained Out for Delivery
-        ord_101 = next((o for o in data.get("orders", []) if o["order_id"] == "ORD-101"), None)
+        ord_101 = next(
+            (o for o in data.get("orders", []) if o["order_id"] == "ORD-101"), None
+        )
         self.assertEqual(ord_101["status"], "Out for Delivery")
 
     def test_07_product_pricing_knowledge(self):
         payload = {
             "user_text": "What is the price of your Vitamin C serum?",
             "history": [],
-            "language_mode": "english"
+            "language_mode": "english",
         }
         res = self.client.post("/api/voice-turn", json=payload)
         self.assertEqual(res.status_code, 200)
@@ -100,13 +110,18 @@ class TestAriaBackend(unittest.TestCase):
         payload = {
             "user_text": "I opened ORD-102 14 days ago and used it. Can I return it for a refund?",
             "history": [],
-            "language_mode": "english"
+            "language_mode": "english",
         }
         res = self.client.post("/api/voice-turn", json=payload)
         self.assertEqual(res.status_code, 200)
         data = res.json()
         reply_lower = data.get("reply_text", "").lower()
-        self.assertTrue("unopened" in reply_lower or "7 days" in reply_lower or "cannot" in reply_lower or "policy" in reply_lower)
+        self.assertTrue(
+            "unopened" in reply_lower
+            or "7 days" in reply_lower
+            or "cannot" in reply_lower
+            or "policy" in reply_lower
+        )
 
     def test_09_three_consecutive_questions_session(self):
         history = []
@@ -116,11 +131,7 @@ class TestAriaBackend(unittest.TestCase):
             ("Where is ORD-101?", "english"),
         ]
         for user_q, lang in turns:
-            payload = {
-                "user_text": user_q,
-                "history": history,
-                "language_mode": lang
-            }
+            payload = {"user_text": user_q, "history": history, "language_mode": lang}
             res = self.client.post("/api/voice-turn", json=payload)
             self.assertEqual(res.status_code, 200)
             data = res.json()
@@ -137,6 +148,7 @@ class TestAriaBackend(unittest.TestCase):
         outcome = res_sum.json()
         self.assertIn("customer_intent", outcome)
         self.assertIn("resolution_status", outcome)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -88,10 +88,12 @@ INITIAL_ORDERS: Dict[str, Dict[str, Any]] = {
 
 LIVE_ORDERS: Dict[str, Dict[str, Any]] = deepcopy(INITIAL_ORDERS)
 
+
 def reset_orders() -> Dict[str, Dict[str, Any]]:
     global LIVE_ORDERS
     LIVE_ORDERS = deepcopy(INITIAL_ORDERS)
     return LIVE_ORDERS
+
 
 BRAND_POLICIES = """
 Aura Skincare Brand & Policy Guidelines:
@@ -101,6 +103,7 @@ Aura Skincare Brand & Policy Guidelines:
 4. Cancellation Policy: Orders can be cancelled ONLY while their status is 'Processing'. Once an order is 'Shipped' or 'Out for Delivery', it cannot be cancelled (customers may refuse delivery at the doorstep).
 5. Cash on Delivery (COD): Available for orders up to ₹2,500. Customers can pay via cash or UPI at the doorstep.
 """
+
 
 def build_system_prompt(language_mode: str = "hinglish") -> str:
     lang_instruction = (
@@ -124,16 +127,19 @@ CRITICAL VOICE RULES:
 {BRAND_POLICIES}
 """
 
+
 class TranscriptTurn(BaseModel):
     role: str = Field(..., description="'user' or 'assistant'")
     text: str
     timestamp: Optional[str] = None
     tool_used: Optional[str] = None
 
+
 class VoiceTurnRequest(BaseModel):
     user_text: str
     history: List[TranscriptTurn] = []
     language_mode: str = "hinglish"
+
 
 class VoiceTurnResponse(BaseModel):
     reply_text: str
@@ -143,8 +149,10 @@ class VoiceTurnResponse(BaseModel):
     tool_result: Optional[Dict[str, Any]] = None
     orders: List[Dict[str, Any]]
 
+
 class SummaryRequest(BaseModel):
     transcript: List[TranscriptTurn]
+
 
 class CallOutcomeJSON(BaseModel):
     customer_intent: str
@@ -176,12 +184,23 @@ load_dotenv()
 AUDIO_RAM_CACHE: Dict[str, Tuple[str, str]] = {}
 
 WORD_TO_DIGIT = {
-    "zero": "0", "oh": "0", "o": "0",
-    "one": "1", "won": "1",
-    "two": "2", "to": "2", "too": "2",
-    "three": "3", "four": "4", "five": "5",
-    "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    "zero": "0",
+    "oh": "0",
+    "o": "0",
+    "one": "1",
+    "won": "1",
+    "two": "2",
+    "to": "2",
+    "too": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
 }
+
 
 def extract_and_normalize_order_id(text: str) -> Optional[str]:
     cleaned = text.lower()
@@ -192,7 +211,9 @@ def extract_and_normalize_order_id(text: str) -> Optional[str]:
     if explicit:
         return f"ORD-{explicit.group(1)}"
 
-    contextual = re.search(r"\b(?:order|id|number|status|cancel|return|track)\D*(\d{3})\b", cleaned)
+    contextual = re.search(
+        r"\b(?:order|id|number|status|cancel|return|track)\D*(\d{3})\b", cleaned
+    )
     if contextual:
         return f"ORD-{contextual.group(1)}"
 
@@ -201,6 +222,7 @@ def extract_and_normalize_order_id(text: str) -> Optional[str]:
         return f"ORD-{standalone.group(1)}"
 
     return None
+
 
 def get_order_details(order_id: str) -> Dict[str, Any]:
     norm_id = order_id.upper().strip()
@@ -216,6 +238,7 @@ def get_order_details(order_id: str) -> Dict[str, Any]:
             "error": f"Order {norm_id} was not found in Aura Skincare's database. Valid sample IDs are ORD-101, ORD-102, ORD-103.",
         }
     return {"found": True, "order": order}
+
 
 def cancel_order(order_id: str) -> Dict[str, Any]:
     lookup = get_order_details(order_id)
@@ -256,7 +279,10 @@ def cancel_order(order_id: str) -> Dict[str, Any]:
             ),
         }
 
-def execute_fast_tool_router(user_text: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+
+def execute_fast_tool_router(
+    user_text: str,
+) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     lower = user_text.lower()
     order_id = extract_and_normalize_order_id(user_text)
 
@@ -268,6 +294,7 @@ def execute_fast_tool_router(user_text: str) -> Tuple[Optional[str], Optional[Di
 
     return f"get_order_details('{order_id}')", get_order_details(order_id)
 
+
 def deterministic_fallback_brain(
     user_text: str,
     language_mode: str,
@@ -277,7 +304,19 @@ def deterministic_fallback_brain(
     is_hi = language_mode == "hinglish"
 
     # Out-of-scope detection
-    out_of_scope_terms = ["flight", "goa", "hotel", "train", "weather", "cricket", "movie", "pizza", "biryani", "stock", "bitcoin"]
+    out_of_scope_terms = [
+        "flight",
+        "goa",
+        "hotel",
+        "train",
+        "weather",
+        "cricket",
+        "movie",
+        "pizza",
+        "biryani",
+        "stock",
+        "bitcoin",
+    ]
     if any(term in lower for term in out_of_scope_terms):
         return (
             "Maaf kijiyega, main sirf Aura Skincare ke products, orders aur policies mein aapki madad kar sakti hoon. Kya main aapke kisi skincare order ko check karoon?"
@@ -314,8 +353,12 @@ def deterministic_fallback_brain(
                     else f"I'm sorry, order {oid} is currently '{status}', and cancellations are only possible while an order is Processing. You may refuse the package at your doorstep."
                 )
 
-        if any(w in lower for w in ["return", "refund", "wapas", "replace", "exchange"]):
-            if oid == "ORD-102" or (order.get("days_since_delivery") and order["days_since_delivery"] > 7):
+        if any(
+            w in lower for w in ["return", "refund", "wapas", "replace", "exchange"]
+        ):
+            if oid == "ORD-102" or (
+                order.get("days_since_delivery") and order["days_since_delivery"] > 7
+            ):
                 return (
                     f"Aapka order {oid} ({prod}) 14 din pehle deliver hua tha. Hamari policy ke mutabik returns sirf delivery ke 7 din ke andar unopened products par hi valid hain, isliye yeh return nahi ho payega."
                     if is_hi
@@ -342,7 +385,19 @@ def deterministic_fallback_brain(
             )
 
     # Policy questions without a specific order ID
-    if any(w in lower for w in ["return", "refund", "opened", "khola", "20 days", "14 days", "damage", "defective"]):
+    if any(
+        w in lower
+        for w in [
+            "return",
+            "refund",
+            "opened",
+            "khola",
+            "20 days",
+            "14 days",
+            "damage",
+            "defective",
+        ]
+    ):
         if any(w in lower for w in ["open", "used", "khola", "20", "14", "10"]):
             return (
                 "Maaf kijiyega, Aura Skincare ki policy ke mutabik hum sirf delivery ke 7 din ke andar unopened aur unused products hi return le sakte hain. Opened ya 7 din se purane products return nahi ho sakte."
@@ -388,6 +443,7 @@ def deterministic_fallback_brain(
         else "Hello! I'm Aria from Aura Skincare. I can help you track an order, cancel a processing order, or answer questions about shipping and returns. Please share your Order ID or question."
     )
 
+
 async def generate_agent_reply(
     user_text: str,
     history: List[TranscriptTurn],
@@ -414,7 +470,9 @@ async def generate_agent_reply(
             for turn in history[-6:]:
                 role = "user" if turn.role == "user" else "model"
                 contents.append({"role": role, "parts": [{"text": turn.text}]})
-            contents.append({"role": "user", "parts": [{"text": user_text + tool_context}]})
+            contents.append(
+                {"role": "user", "parts": [{"text": user_text + tool_context}]}
+            )
 
             url = f"[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=){gemini_key}"
             payload = {
@@ -444,7 +502,12 @@ async def generate_agent_reply(
                 resp = await client.post(
                     "[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)",
                     headers={"Authorization": f"Bearer {groq_key}"},
-                    json={"model": "llama-3.3-70b-versatile", "messages": messages, "temperature": 0.25, "max_tokens": 130},
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": messages,
+                        "temperature": 0.25,
+                        "max_tokens": 130,
+                    },
                 )
                 if resp.status_code == 200:
                     data = resp.json()
@@ -458,7 +521,10 @@ async def generate_agent_reply(
     fallback_reply = deterministic_fallback_brain(user_text, language_mode, tool_result)
     return fallback_reply, tool_used, tool_result
 
-async def synthesize_speech_base64(text: str, language_mode: str = "hinglish") -> Tuple[Optional[str], str]:
+
+async def synthesize_speech_base64(
+    text: str, language_mode: str = "hinglish"
+) -> Tuple[Optional[str], str]:
     cache_key = f"{language_mode}:{text.strip()}"
     if cache_key in AUDIO_RAM_CACHE:
         return AUDIO_RAM_CACHE[cache_key]
@@ -469,10 +535,15 @@ async def synthesize_speech_base64(text: str, language_mode: str = "hinglish") -
             async with httpx.AsyncClient(timeout=4.5) as client:
                 resp = await client.post(
                     "[https://api.sarvam.ai/text-to-speech](https://api.sarvam.ai/text-to-speech)",
-                    headers={"api-subscription-key": sarvam_key, "Content-Type": "application/json"},
+                    headers={
+                        "api-subscription-key": sarvam_key,
+                        "Content-Type": "application/json",
+                    },
                     json={
                         "text": text[:2400],
-                        "target_language_code": "hi-IN" if language_mode == "hinglish" else "en-IN",
+                        "target_language_code": "hi-IN"
+                        if language_mode == "hinglish"
+                        else "en-IN",
                         "speaker": "priya",
                         "model": "bulbul:v3",
                         "pace": 1.05,
@@ -507,6 +578,7 @@ async def synthesize_speech_base64(text: str, language_mode: str = "hinglish") -
 
     return None, "audio/mp3"
 
+
 async def build_structured_summary(transcript: List[TranscriptTurn]) -> CallOutcomeJSON:
     full_text = "\n".join([f"{t.role.upper()}: {t.text}" for t in transcript])
     detected_order = extract_and_normalize_order_id(full_text)
@@ -524,9 +596,14 @@ async def build_structured_summary(transcript: List[TranscriptTurn]) -> CallOutc
             status = "REJECTED_BY_POLICY"
     elif any(w in lower_user for w in ["return", "refund", "wapas", "opened"]):
         intent = "RETURN_REQUEST"
-        if any(w in lower_user for w in ["open", "20", "14"]) or detected_order == "ORD-102":
+        if (
+            any(w in lower_user for w in ["open", "20", "14"])
+            or detected_order == "ORD-102"
+        ):
             status = "REJECTED_BY_POLICY"
-    elif detected_order or any(w in lower_user for w in ["where", "track", "status", "kahan", "kab"]):
+    elif detected_order or any(
+        w in lower_user for w in ["where", "track", "status", "kahan", "kab"]
+    ):
         intent = "ORDER_TRACKING"
     elif any(w in lower_user for w in ["shipping", "cod", "policy", "delivery"]):
         intent = "POLICY_INQUIRY"
@@ -548,11 +625,16 @@ async def build_structured_summary(transcript: List[TranscriptTurn]) -> CallOutc
                     url,
                     json={
                         "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.1},
+                        "generationConfig": {
+                            "responseMimeType": "application/json",
+                            "temperature": 0.1,
+                        },
                     },
                 )
                 if resp.status_code == 200:
-                    raw_json = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+                    raw_json = resp.json()["candidates"][0]["content"]["parts"][0][
+                        "text"
+                    ]
                     parsed = json.loads(raw_json)
                     return CallOutcomeJSON(
                         customer_intent=parsed.get("customer_intent", intent),
@@ -614,6 +696,7 @@ GREETINGS = {
     "english": "Hello! I am Aria from Aura Skincare support. How can I help you with your order or skincare questions today?",
 }
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Pre-warm greeting audio into RAM on startup so Start Call has 0ms lag
@@ -624,21 +707,26 @@ async def lifespan(app: FastAPI):
             pass
     yield
 
+
 app = FastAPI(title="Aura Skincare Voice CX Agent", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/")
 async def index():
     return FileResponse("static/index.html")
 
+
 @app.get("/api/orders")
 async def get_all_orders():
     return {"orders": list(LIVE_ORDERS.values())}
+
 
 @app.post("/api/reset")
 async def reset_demo_orders():
     updated = reset_orders()
     return {"orders": list(updated.values())}
+
 
 @app.get("/api/greeting")
 async def get_greeting(language_mode: str = "hinglish"):
@@ -650,6 +738,7 @@ async def get_greeting(language_mode: str = "hinglish"):
         "audio_mime": mime,
         "orders": list(LIVE_ORDERS.values()),
     }
+
 
 @app.post("/api/voice-turn", response_model=VoiceTurnResponse)
 async def process_voice_turn(req: VoiceTurnRequest):
@@ -667,6 +756,7 @@ async def process_voice_turn(req: VoiceTurnRequest):
         tool_result=tool_result,
         orders=list(LIVE_ORDERS.values()),
     )
+
 
 @app.post("/api/summary", response_model=CallOutcomeJSON)
 async def create_call_summary(req: SummaryRequest):
