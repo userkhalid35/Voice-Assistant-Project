@@ -179,8 +179,17 @@ class SummaryRequest(BaseModel):
     transcript: list[TranscriptTurn]
 
 
+class CallMetrics(BaseModel):
+    total_turns: int = 0
+    language_detected: str = "English"
+
+
 class CallOutcomeJSON(BaseModel):
     customer_intent: str
     order_id: str | None = None
     resolution_status: str
     call_summary: str
+    policy_applied: str = "None"
+    products_discussed: list[str] = Field(default_factory=list)
+    recommended_next_step: str = ""
+    call_metrics: CallMetrics = Field(default_factory=CallMetrics)

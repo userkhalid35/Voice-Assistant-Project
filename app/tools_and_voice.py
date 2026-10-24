@@ -23,6 +23,7 @@ if _PROJECT_ROOT not in sys.path:
 from app.models_and_data import (
     LIVE_ORDERS,
     PRODUCTS_CATALOG,
+    CallMetrics,
     CallOutcomeJSON,
     TranscriptTurn,
     build_system_prompt,
@@ -31,6 +32,18 @@ from app.models_and_data import (
 load_dotenv()
 
 AUDIO_RAM_CACHE: dict[str, tuple[str, str]] = {}
+MAX_AUDIO_CACHE_SIZE = 128
+
+
+def _cache_audio(key: str, val: tuple[str, str]) -> None:
+    if len(AUDIO_RAM_CACHE) >= MAX_AUDIO_CACHE_SIZE:
+        try:
+            first_key = next(iter(AUDIO_RAM_CACHE))
+            del AUDIO_RAM_CACHE[first_key]
+        except (StopIteration, KeyError):
+            pass
+    AUDIO_RAM_CACHE[key] = val
+
 
 HINDI_HINGLISH_INDICATORS = {
     "mera", "meri", "mere", "kahan", "kab", "karo", "karein", "karna", "karta", "karti",
@@ -51,6 +64,9 @@ def detect_language(text: str) -> str:
     if re.search(r"[\u0900-\u097f]", text):
         return "hinglish"
     lower = text.lower()
+    # Explicit user instruction to speak English
+    if re.search(r"\b(?:only english|in english|speak english|no hindi|not hindi)\b", lower):
+        return "english"
     if "hindi" in lower or "hinglish" in lower:
         return "hinglish"
     words = set(re.findall(r"\b[a-zA-Z]+\b", lower))
@@ -91,9 +107,14 @@ def extract_and_normalize_order_id(text: str) -> str | None:
     if not text:
         return None
     cleaned = text.lower()
+    cleaned = re.sub(r"\bo\s*r\s*d\b", "ord", cleaned)
+    cleaned = re.sub(r"\b(dash|hyphen|minus)\b", "-", cleaned)
     cleaned = re.sub(r"\bone\s+hundred\s+(?:and\s+)?one\b", "101", cleaned)
     cleaned = re.sub(r"\bone\s+hundred\s+(?:and\s+)?two\b", "102", cleaned)
     cleaned = re.sub(r"\bone\s+hundred\s+(?:and\s+)?three\b", "103", cleaned)
+    cleaned = re.sub(r"\bek\s+sau\s+(?:aur\s+)?ek\b", "101", cleaned)
+    cleaned = re.sub(r"\bek\s+sau\s+(?:aur\s+)?do\b", "102", cleaned)
+    cleaned = re.sub(r"\bek\s+sau\s+(?:aur\s+)?teen\b", "103", cleaned)
 
     for word, digit in WORD_TO_DIGIT.items():
         cleaned = re.sub(rf"\b{word}\b", digit, cleaned)
@@ -105,7 +126,7 @@ def extract_and_normalize_order_id(text: str) -> str | None:
         return f"ORD-{explicit.group(1)}"
 
     contextual = re.search(
-        r"\b(?:order|id|number|status|cancel|return|track|mera)\D*(\d{3})\b", cleaned
+        r"\b(?:order|id|number|status|cancel|return|track|mera|parcel|package|shipment)\D*(\d{3})\b", cleaned
     )
     if contextual:
         return f"ORD-{contextual.group(1)}"
@@ -118,7 +139,8 @@ def extract_and_normalize_order_id(text: str) -> str | None:
 
 
 def get_order_details(order_id: str) -> dict[str, Any]:
-    norm_id = order_id.upper().strip()
+    raw_id = re.sub(r"[^\w\-]", "", (order_id or "").upper().strip())
+    norm_id = raw_id
     if not norm_id.startswith("ORD-"):
         digits = re.sub(r"\D", "", norm_id)
         norm_id = f"ORD-{digits}" if digits else norm_id
@@ -127,8 +149,8 @@ def get_order_details(order_id: str) -> dict[str, Any]:
     if not order:
         return {
             "found": False,
-            "requested_id": norm_id,
-            "error": f"Order {norm_id} was not found in Aura Skincare's database. Valid sample IDs are ORD-101, ORD-102, ORD-103.",
+            "requested_id": norm_id or order_id,
+            "error": f"Order {norm_id or order_id} was not found in Aura Skincare's database. Valid sample IDs are ORD-101, ORD-102, ORD-103.",
         }
     return {"found": True, "order": order}
 
@@ -195,57 +217,27 @@ def get_product_recommendations(query_or_skin_type: str) -> dict[str, Any]:
         matched.append(PRODUCTS_CATALOG["vitamin-c-serum"])
 
     # 2. Hydrating Sunscreen SPF 50
-    if any(
-        k in query
-        for k in [
-            "sunscreen",
-            "spf",
-            "sun",
-            "dhoop",
-            "tan",
-            "protect",
-            "hydration",
-            "moistur",
-            "सनस्क्रीन",
-        ]
-    ):
+    if re.search(r"\b(?:sunscreen|spf|sun|dhoop|tan|protect|hydration|moistur\w*|uv)\b", query) or "सनस्क्रीन" in query:
         matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
 
     # 3. Green Tea Face Wash + Toner
-    if any(
-        k in query
-        for k in [
-            "green tea",
-            "face wash",
-            "wash",
-            "toner",
-            "acne",
-            "pimple",
-            "pore",
-            "pores",
-            "cleanse",
-            "cleanser",
-            "muhase",
-            "मुंहासे",
-            "पिंपल",
-        ]
-    ):
+    if re.search(r"\b(?:green tea|face wash|wash|toner|acne|pimple|pore|pores|cleanse|cleanser|muhase)\b", query) or any(k in query for k in ["मुंहासे", "पिंपल"]):
         matched.append(PRODUCTS_CATALOG["green-tea-combo"])
 
     # Skin type heuristics
-    if "oily" in query or "greasy" in query or "oil" in query or "tel" in query:
+    if re.search(r"\b(?:oily|greasy|oil|tel|chipchip\w*)\b", query):
         if PRODUCTS_CATALOG["green-tea-combo"] not in matched:
             matched.append(PRODUCTS_CATALOG["green-tea-combo"])
         if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
             matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
 
-    if "dry" in query or "sukhi" in query or "dehydrat" in query:
+    if re.search(r"\b(?:dry|sukhi|dehydrat\w*)\b", query):
         if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
             matched.append(PRODUCTS_CATALOG["hydrating-sunscreen"])
         if PRODUCTS_CATALOG["vitamin-c-serum"] not in matched:
             matched.append(PRODUCTS_CATALOG["vitamin-c-serum"])
 
-    if "combination" in query or "sensitive" in query:
+    if re.search(r"\b(?:combination|sensitive)\b", query):
         if PRODUCTS_CATALOG["green-tea-combo"] not in matched:
             matched.append(PRODUCTS_CATALOG["green-tea-combo"])
         if PRODUCTS_CATALOG["hydrating-sunscreen"] not in matched:
@@ -256,13 +248,12 @@ def get_product_recommendations(query_or_skin_type: str) -> dict[str, Any]:
         k in query
         for k in [
             "catalog",
-            "all",
-            "product",
-            "routine",
-            "best",
-            "recommend",
-            "sab",
-            "kaunsa",
+            "all products",
+            "entire catalog",
+            "whole range",
+            "sab products",
+            "sari range",
+            "all range",
         ]
     ):
         matched = list(PRODUCTS_CATALOG.values())
@@ -296,6 +287,25 @@ def execute_fast_tool_router(
         ):
             return f"cancel_order('{order_id}')", cancel_order(order_id)
         return f"get_order_details('{order_id}')", get_order_details(order_id)
+
+    # Check if query is actually a policy/return/cancellation inquiry before checking product keywords
+    is_policy_or_return_query = any(
+        k in lower
+        for k in [
+            "return",
+            "refund",
+            "replace",
+            "exchange",
+            "wapas",
+            "cancel",
+            "radd",
+            "policy",
+            "shipping charge",
+            "delivery fee",
+            "cod",
+            "cash on delivery",
+        ]
+    )
 
     # Check for Skincare / Product inquiries
     skincare_keywords = [
@@ -337,7 +347,7 @@ def execute_fast_tool_router(
         "सीरम",
         "सनस्क्रीन",
     ]
-    if any(k in lower for k in skincare_keywords):
+    if not is_policy_or_return_query and any(k in lower for k in skincare_keywords):
         clean_query = user_text.strip()
         if len(clean_query) > 50:
             clean_query = clean_query[:50] + "..."
@@ -359,8 +369,12 @@ def _recognize_wav_with_sr(wav_bytes: bytes, language_mode: str = "hinglish") ->
         recognize_google_fn = getattr(recognizer, "recognize_google", None)
         if callable(recognize_google_fn):
             text = recognize_google_fn(audio_data, language="en-IN")
-            if text and text.strip():
+            if isinstance(text, str) and text.strip():
                 return text.strip()
+            if language_mode == "hinglish":
+                text_hi = recognize_google_fn(audio_data, language="hi-IN")
+                if isinstance(text_hi, str) and text_hi.strip():
+                    return text_hi.strip()
 
     except Exception as e:  # noqa: BLE001
         logger.debug("SpeechRecognition decoding failed: %s", e)
@@ -382,7 +396,10 @@ async def transcribe_wav_audio(
     hint_clean = (browser_hint or "").strip()
 
     try:
-        wav_bytes = base64.b64decode(audio_base64)
+        raw_b64 = audio_base64
+        if "," in raw_b64:
+            raw_b64 = raw_b64.split(",", 1)[1]
+        wav_bytes = base64.b64decode(raw_b64)
     except Exception as e:  # noqa: BLE001
         logger.debug("Base64 audio decode failed: %s", e)
         return hint_clean
@@ -418,9 +435,9 @@ async def transcribe_wav_audio(
                     files=files,
                 )
                 if resp.status_code == 200:
-                    text = resp.json().get("text", "").strip()
-                    if text:
-                        return text
+                    raw_text = resp.json().get("text")
+                    if isinstance(raw_text, str) and raw_text.strip():
+                        return raw_text.strip()
         except Exception as e:  # noqa: BLE001
             logger.debug("Layer 2 Groq Whisper error: %s", e)
 
@@ -456,8 +473,8 @@ async def transcribe_wav_audio(
                     candidates = resp.json().get("candidates", [])
                     if candidates:
                         parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            t_text = parts[0].get("text", "").strip()
+                        if parts and isinstance(parts[0].get("text"), str):
+                            t_text = parts[0]["text"].strip()
                             if t_text and t_text.upper() != "EMPTY":
                                 return t_text
         except Exception as e:  # noqa: BLE001
@@ -488,52 +505,30 @@ def deterministic_fallback_brain(
         "biryani",
         "stock",
         "bitcoin",
-        "code",
+        "crypto",
+        "coding",
         "python",
         "math",
     ]
-    if any(term in lower for term in out_of_scope_terms):
+    # Check if the query is actually skincare or order related before considering out-of-scope
+    has_skincare_or_order_intent = bool(
+        extract_and_normalize_order_id(user_text)
+        or any(
+            re.search(rf"\b{w}\b", lower)
+            for w in [
+                "sunscreen", "serum", "face wash", "toner", "spf", "cream", "skin",
+                "oily", "dry", "acne", "pimple", "order", "delivery", "track", "cancel", "return", "product"
+            ]
+        )
+    )
+    if not has_skincare_or_order_intent and any(re.search(rf"\b{term}\b", lower) for term in out_of_scope_terms):
         return (
             "Maaf kijiyega, main sirf Aura Skincare ke products, orders aur policies mein aapki madad kar sakti hoon. Kya main aapke kisi order ya skincare query mein help karoon?"
             if is_hi
             else "I'm sorry, I can only assist you with Aura Skincare orders, products, and policies. Would you like me to check an order or recommend a product?"
         )
 
-    # 1. Product recommendations tool result
-    if tool_result is not None and "products" in tool_result:
-        matched_prods = tool_result.get("products", [])
-        if any(w in lower for w in ["oil", "acne", "pimple", "pore", "pores", "face wash", "toner"]):
-            return (
-                "Oily aur acne-prone skin ke liye hamara Green Tea Face Wash + Toner combo (₹850) sabse best hai, jo excess oil aur pores ko control karta hai. Iske baad Hydrating Sunscreen SPF 50 (₹499) lagayein."
-                if is_hi
-                else "For oily and acne-prone skin, our Green Tea Face Wash + Toner combo (₹850) is ideal for clearing pores, paired with our lightweight Hydrating Sunscreen SPF 50 (₹499)."
-            )
-        if any(w in lower for w in ["vitamin c", "serum", "brighten", "dull", "dark spot", "pigment"]):
-            return (
-                "Dull skin aur dark spots ke liye hamara Vitamin C Serum (30ml) ₹699 ka hai. Yeh skin ko brighten karta hai aur collagen boost karta hai. Morning mein ise Sunscreen ke neeche lagayein."
-                if is_hi
-                else "For dull skin and dark spots, our Vitamin C Serum (30ml) is priced at ₹699. It brightens skin and fades pigmentation. Apply it before sunscreen in the morning."
-            )
-        if any(w in lower for w in ["sunscreen", "spf", "dhoop", "sun"]):
-            return (
-                "Hamara Hydrating Sunscreen SPF 50 ₹499 ka hai. Yeh lightweight, zero-white-cast broad-spectrum UVA aur UVB protection deta hai aur sabhi skin types ke liye suitable hai."
-                if is_hi
-                else "Our Hydrating Sunscreen SPF 50 is ₹499. It provides lightweight, no-white-cast broad-spectrum UVA and UVB protection with deep hydration for all skin types."
-            )
-        if any(w in lower for w in ["dry", "sensitive"]):
-            return (
-                "Dry aur sensitive skin ke liye Hydrating Sunscreen SPF 50 (₹499) deep moisture deta hai, aur Vitamin C Serum (₹699) glowing nourishment provide karta hai."
-                if is_hi
-                else "For dry and sensitive skin, our Hydrating Sunscreen SPF 50 (₹499) delivers deep hydration, while Vitamin C Serum (₹699) provides gentle brightening nourishment."
-            )
-        # General catalog or routine
-        return (
-            "Aura Skincare mein Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499) aur Green Tea Face Wash + Toner (₹850) available hain. Aap apni skin type batayein toh main perfect routine suggest karoon?"
-            if is_hi
-            else "Aura Skincare offers Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499), and Green Tea Face Wash + Toner (₹850). Tell me your skin type and I can recommend the right routine."
-        )
-
-    # 2. Order details / cancellation tool result
+    # 1. Order details / cancellation tool result
     if tool_result is not None and "found" in tool_result:
         if not tool_result.get("found"):
             bad_id = tool_result.get("requested_id", "that ID")
@@ -564,15 +559,25 @@ def deterministic_fallback_brain(
 
         if any(
             w in lower for w in ["return", "refund", "wapas", "replace", "exchange"]
-        ) and (
-            oid == "ORD-102"
-            or (order.get("days_since_delivery") and order["days_since_delivery"] > 7)
         ):
-            return (
-                f"Aapka order {oid} ({prod}) 14 din pehle deliver hua tha. Hamari policy ke mutabik returns sirf delivery ke 7 din ke andar unopened products par hi valid hain, isliye yeh return nahi ho payega."
-                if is_hi
-                else f"Order {oid} for {prod} was delivered 14 days ago. Since our return policy only covers unopened items within 7 days of delivery, this order is not eligible for a return."
-            )
+            if oid == "ORD-101":
+                return (
+                    f"Aapka order {oid} ({prod}) abhi Out for Delivery hai. Returns sirf delivery ke baad unopened products par hi request kiye ja sakte hain, ya aap delivery ke waqt doorstep par parcel refuse kar sakte hain."
+                    if is_hi
+                    else f"Order {oid} for {prod} is currently Out for Delivery. Returns can only be initiated after delivery for unopened items, or you may refuse delivery at the doorstep."
+                )
+            if oid == "ORD-102" or (order.get("days_since_delivery") and order["days_since_delivery"] > 7):
+                return (
+                    f"Aapka order {oid} ({prod}) 14 din pehle deliver hua tha. Hamari policy ke mutabik returns sirf delivery ke 7 din ke andar unopened products par hi valid hain, isliye yeh return nahi ho payega."
+                    if is_hi
+                    else f"Order {oid} for {prod} was delivered 14 days ago. Since our return policy only covers unopened items within 7 days of delivery, this order is not eligible for a return."
+                )
+            if oid == "ORD-103":
+                return (
+                    f"Aapka order {oid} ({prod}) abhi Processing status mein hai. Dispatch se pehle aap ise return karne ki jagah turant cancel kar sakte hain."
+                    if is_hi
+                    else f"Your order {oid} for {prod} is still Processing. Before dispatch, you may cancel it right away instead of waiting for return."
+                )
 
         if oid == "ORD-101":
             return (
@@ -593,7 +598,7 @@ def deterministic_fallback_brain(
                 else f"Your order {oid} for {prod} is currently {status}. Since it was ordered 3 hours ago, it is still eligible for cancellation if needed."
             )
 
-    # 3. Policy questions
+    # 2. Policy & Return questions (checked before generic product recommendations)
     if any(
         w in lower
         for w in [
@@ -637,6 +642,46 @@ def deterministic_fallback_brain(
             "Haan ji, ₹2,500 tak ke orders par Cash on Delivery available hai, aur aap doorstep par cash ya UPI dono se payment kar sakte hain."
             if is_hi
             else "Yes, Cash on Delivery is available for orders up to ₹2,500, and you can pay by cash or UPI right at your doorstep."
+        )
+
+    if any(w in lower for w in ["cancel", "radd"]):
+        return (
+            "Orders sirf tabhi cancel ho sakte hain jab unka status Processing ho. Shipped ya Out for Delivery hone ke baad cancel nahi hota, par aap doorstep par delivery refuse kar sakte hain. Apna Order ID batayein toh main check karoon?"
+            if is_hi
+            else "Orders can only be cancelled while in Processing status. Once Shipped or Out for Delivery, they cannot be cancelled, though you may refuse doorstep delivery. Please share your Order ID so I can check."
+        )
+
+    # 3. Product recommendations tool result
+    if tool_result is not None and "products" in tool_result:
+        if any(w in lower for w in ["oil", "acne", "pimple", "pore", "pores", "face wash", "toner"]):
+            return (
+                "Oily aur acne-prone skin ke liye hamara Green Tea Face Wash + Toner combo (₹850) sabse best hai, jo excess oil aur pores ko control karta hai. Iske baad Hydrating Sunscreen SPF 50 (₹499) lagayein."
+                if is_hi
+                else "For oily and acne-prone skin, our Green Tea Face Wash + Toner combo (₹850) is ideal for clearing pores, paired with our lightweight Hydrating Sunscreen SPF 50 (₹499)."
+            )
+        if any(w in lower for w in ["vitamin c", "serum", "brighten", "dull", "dark spot", "pigment"]):
+            return (
+                "Dull skin aur dark spots ke liye hamara Vitamin C Serum (30ml) ₹699 ka hai. Yeh skin ko brighten karta hai aur collagen boost karta hai. Morning mein ise Sunscreen ke neeche lagayein."
+                if is_hi
+                else "For dull skin and dark spots, our Vitamin C Serum (30ml) is priced at ₹699. It brightens skin and fades pigmentation. Apply it before sunscreen in the morning."
+            )
+        if any(w in lower for w in ["sunscreen", "spf", "dhoop", "sun"]):
+            return (
+                "Hamara Hydrating Sunscreen SPF 50 ₹499 ka hai. Yeh lightweight, zero-white-cast broad-spectrum UVA aur UVB protection deta hai aur sabhi skin types ke liye suitable hai."
+                if is_hi
+                else "Our Hydrating Sunscreen SPF 50 is ₹499. It provides lightweight, no-white-cast broad-spectrum UVA and UVB protection with deep hydration for all skin types."
+            )
+        if any(w in lower for w in ["dry", "sensitive"]):
+            return (
+                "Dry aur sensitive skin ke liye Hydrating Sunscreen SPF 50 (₹499) deep moisture deta hai, aur Vitamin C Serum (₹699) glowing nourishment provide karta hai."
+                if is_hi
+                else "For dry and sensitive skin, our Hydrating Sunscreen SPF 50 (₹499) delivers deep hydration, while Vitamin C Serum (₹699) provides gentle brightening nourishment."
+            )
+        # General catalog or routine
+        return (
+            "Aura Skincare mein Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499) aur Green Tea Face Wash + Toner (₹850) available hain. Aap apni skin type batayein toh main perfect routine suggest karoon?"
+            if is_hi
+            else "Aura Skincare offers Vitamin C Serum (₹699), Hydrating Sunscreen SPF 50 (₹499), and Green Tea Face Wash + Toner (₹850). Tell me your skin type and I can recommend the right routine."
         )
 
     if any(w in lower for w in ["cancel", "radd"]):
@@ -747,9 +792,15 @@ async def generate_agent_reply(
                 resp = await client.post(url, json=payload)
                 if resp.status_code == 200:
                     data = resp.json()
-                    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    clean = re.sub(r"[\*\#\`]", "", text)
-                    return clean, tool_used, tool_result
+                    candidates = data.get("candidates", [])
+                    if candidates and isinstance(candidates[0], dict):
+                        content = candidates[0].get("content")
+                        if isinstance(content, dict):
+                            parts = content.get("parts", [])
+                            if parts and isinstance(parts[0], dict) and isinstance(parts[0].get("text"), str):
+                                text = parts[0]["text"].strip()
+                                clean = re.sub(r"[\*\#\`]", "", text)
+                                return clean, tool_used, tool_result
         except Exception as e:  # noqa: BLE001
             logger.debug("Gemini LLM reply error: %s", e)
 
@@ -773,9 +824,14 @@ async def generate_agent_reply(
                 )
                 if resp.status_code == 200:
                     data = resp.json()
-                    text = data["choices"][0]["message"]["content"].strip()
-                    clean = re.sub(r"[\*\#\`]", "", text)
-                    return clean, tool_used, tool_result
+                    choices = data.get("choices", [])
+                    if choices and isinstance(choices[0], dict):
+                        msg = choices[0].get("message")
+                        if isinstance(msg, dict):
+                            msg_content = msg.get("content")
+                            if isinstance(msg_content, str):
+                                clean = re.sub(r"[\*\#\`]", "", msg_content.strip())
+                                return clean, tool_used, tool_result
         except Exception as e:  # noqa: BLE001
             logger.debug("Groq LLM reply error: %s", e)
 
@@ -786,6 +842,9 @@ async def generate_agent_reply(
 async def synthesize_speech_base64(
     text: str, language_mode: str = "auto"
 ) -> tuple[str | None, str]:
+    if not text or not text.strip():
+        return None, "audio/mp3"
+
     # Determine effective language for TTS voice selection
     effective_lang = language_mode
     if effective_lang == "auto":
@@ -820,7 +879,7 @@ async def synthesize_speech_base64(
                     audios = resp.json().get("audios", [])
                     if audios:
                         result = (audios[0], "audio/wav")
-                        AUDIO_RAM_CACHE[cache_key] = result
+                        _cache_audio(cache_key, result)
                         return result
         except Exception as e:  # noqa: BLE001
             logger.debug("Sarvam TTS error: %s", e)
@@ -835,12 +894,14 @@ async def synthesize_speech_base64(
         buffer = io.BytesIO()
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
-                buffer.write(chunk["data"])
+                chunk_data = chunk.get("data")
+                if chunk_data:
+                    buffer.write(chunk_data)
         audio_bytes = buffer.getvalue()
         if audio_bytes:
             b64 = base64.b64encode(audio_bytes).decode("utf-8")
             result = (b64, "audio/mp3")
-            AUDIO_RAM_CACHE[cache_key] = result
+            _cache_audio(cache_key, result)
             return result
     except Exception as e:  # noqa: BLE001
         logger.debug("Edge TTS error: %s", e)
@@ -850,76 +911,163 @@ async def synthesize_speech_base64(
 
 async def build_structured_summary(transcript: list[TranscriptTurn]) -> CallOutcomeJSON:
     full_text = "\n".join([f"{t.role.upper()}: {t.text}" for t in transcript])
+    all_text_lower = full_text.lower()
     detected_order = extract_and_normalize_order_id(full_text)
 
-    lower_user = " ".join([t.text.lower() for t in transcript if t.role == "user"])
-    intent = "GENERAL_INQUIRY"
-    status = "RESOLVED"
+    user_turns = [t for t in transcript if t.role == "user"]
+    user_texts = [t.text for t in user_turns]
+    lower_user = " ".join([t.lower() for t in user_texts])
 
-    if any(w in lower_user for w in ["flight", "goa", "hotel", "weather", "cricket"]):
-        intent = "OUT_OF_SCOPE"
-        status = "REJECTED_BY_POLICY"
-    elif any(w in lower_user for w in ["cancel", "radd"]):
+    # Language detection across user turns
+    has_hinglish = any(detect_language(t) == "hinglish" for t in user_texts)
+    has_english = any(detect_language(t) == "english" for t in user_texts)
+    if has_hinglish and has_english:
+        lang_detected = "English / Hinglish"
+    elif has_hinglish:
+        lang_detected = "Hinglish"
+    else:
+        lang_detected = "English"
+
+    # Products discussed extraction
+    products_discussed: list[str] = []
+    if any(k in all_text_lower for k in ["vitamin c", "serum", "brighten", "pigmentation"]) or detected_order == "ORD-101":
+        products_discussed.append("Vitamin C Serum (30ml)")
+    if any(k in all_text_lower for k in ["sunscreen", "spf", "dhoop", "sun protection"]) or detected_order == "ORD-102":
+        products_discussed.append("Hydrating Sunscreen SPF 50")
+    if any(k in all_text_lower for k in ["green tea", "face wash", "toner", "acne", "pimple", "oily", "pores", "combo"]) or detected_order == "ORD-103":
+        products_discussed.append("Green Tea Face Wash + Toner")
+
+    # Intent classification
+    intent = "GENERAL_SUPPORT"
+    status = "RESOLVED"
+    policy_applied = "None"
+    recommended_next_step = "Contact Aura Skincare support if further assistance is needed."
+    call_summary = "Customer connected with Aria from Aura Skincare support."
+
+    is_cancellation = any(w in lower_user for w in ["cancel", "radd", "cancellation"])
+    is_return = any(w in lower_user for w in ["return", "refund", "wapas", "opened", "exchange"])
+    is_tracking = detected_order is not None or any(w in lower_user for w in ["where", "track", "status", "kahan", "kab", "pahuncha", "delivery date"])
+    is_product = any(
+        w in lower_user
+        for w in [
+            "vitamin", "serum", "sunscreen", "spf", "face wash", "toner", "green tea",
+            "skin", "oily", "dry", "acne", "pimple", "tan", "pore", "pores", "glow",
+            "price", "cost", "kitne", "routine", "recommend", "suggestion", "product", "catalog"
+        ]
+    )
+    is_policy = any(w in lower_user for w in ["shipping", "ship", "delivery fee", "delivery charge", "cod", "cash on delivery", "policy"])
+    is_out_of_scope = any(w in lower_user for w in ["flight", "goa", "hotel", "weather", "cricket", "movie", "pizza", "bitcoin"])
+
+    if is_out_of_scope:
+        intent = "GENERAL_SUPPORT"
+        status = "POLICY_DECLINED"
+        policy_applied = "Support Scope Policy (Aura Skincare customer support assists exclusively with brand products, orders, and policies)"
+        call_summary = "Customer asked questions outside the Aura Skincare support domain. Aria politely redirected the customer to skincare and order assistance."
+        recommended_next_step = "Ask an Aura Skincare related product, routine, or order inquiry."
+
+    elif is_cancellation:
         intent = "CANCELLATION_REQUEST"
-        if detected_order == "ORD-101" or detected_order == "ORD-102":
-            status = "REJECTED_BY_POLICY"
-    elif any(w in lower_user for w in ["return", "refund", "wapas", "opened"]):
+        if detected_order == "ORD-103":
+            status = "RESOLVED"
+            policy_applied = "Cancellation Policy (Allowed while order status is 'Processing')"
+            call_summary = f"Customer requested cancellation for order ORD-103 ({LIVE_ORDERS['ORD-103']['product']}). As the order was in Processing status, Aria successfully cancelled it."
+            recommended_next_step = "No further action needed; order cancellation is confirmed."
+        elif detected_order == "ORD-101":
+            status = "POLICY_DECLINED"
+            policy_applied = "Cancellation Policy (Orders that are 'Out for Delivery' cannot be cancelled)"
+            call_summary = "Customer requested cancellation for order ORD-101. Aria declined per policy because the order is Out for Delivery with BlueDart."
+            recommended_next_step = "Refuse delivery at doorstep when BlueDart arrives."
+        elif detected_order == "ORD-102":
+            status = "POLICY_DECLINED"
+            policy_applied = "Cancellation Policy (Delivered orders cannot be cancelled)"
+            call_summary = "Customer requested cancellation for order ORD-102. Aria declined per policy as the order was already delivered."
+            recommended_next_step = "Check eligibility under the 7-day unopened return policy if applicable."
+        else:
+            status = "RESOLVED"
+            policy_applied = "Cancellation Policy (Orders can only be cancelled while in Processing status)"
+            call_summary = "Customer inquired about order cancellation policy. Aria explained that cancellations are permitted only while orders are Processing."
+            recommended_next_step = "Share your Order ID (such as ORD-103) while it is still Processing to proceed with cancellation."
+
+    elif is_return:
         intent = "RETURN_REQUEST"
-        if (
-            any(w in lower_user for w in ["open", "20", "14"])
-            or detected_order == "ORD-102"
-        ):
-            status = "REJECTED_BY_POLICY"
-    elif detected_order or any(
-        w in lower_user for w in ["where", "track", "status", "kahan", "kab"]
-    ):
+        if detected_order == "ORD-102" or any(w in lower_user for w in ["open", "used", "14 days", "20 days"]):
+            status = "POLICY_DECLINED"
+            policy_applied = "Return Policy (Returns accepted only within 7 days of delivery for unopened, unused products in original packaging)"
+            call_summary = "Customer requested a return for an opened product or an order delivered over 7 days ago. Aria enforced the 7-day unopened return policy and declined the request."
+            recommended_next_step = "Retain product; opened items or orders delivered over 7 days ago are not eligible for return."
+        else:
+            status = "RESOLVED"
+            policy_applied = "Return Policy (7 days unopened & unused in original packaging; 48 hours for damaged items with photos)"
+            call_summary = "Customer inquired about return procedure. Aria explained Aura Skincare's 7-day unopened return policy and 48-hour damaged item reporting window."
+            recommended_next_step = "Ensure item is unopened in original packaging and submit return request within 7 days of delivery."
+
+    elif is_tracking:
         intent = "ORDER_TRACKING"
-    elif any(
-        w in lower_user
-        for w in [
-            "oily",
-            "acne",
-            "pimple",
-            "dry",
-            "sensitive",
-            "routine",
-            "tan",
-            "pore",
-            "pores",
-            "kaunsa",
-        ]
-    ):
-        intent = "SKINCARE_ADVICE"
-    elif any(
-        w in lower_user
-        for w in [
-            "vitamin c",
-            "serum",
-            "sunscreen",
-            "spf",
-            "face wash",
-            "toner",
-            "green tea",
-            "price",
-            "catalog",
-            "cost",
-            "kitne ka",
-            "products",
-        ]
-    ):
+        if detected_order == "ORD-101":
+            status = "RESOLVED"
+            policy_applied = "Shipping & Live Courier Tracking Policy (BlueDart BD-982103)"
+            call_summary = "Customer inquired about tracking order ORD-101 (Vitamin C Serum). Aria confirmed it is Out for Delivery via BlueDart and expected by 6 PM today."
+            recommended_next_step = "Wait for BlueDart delivery by 6 PM today."
+        elif detected_order == "ORD-102":
+            status = "RESOLVED"
+            policy_applied = "Courier Delivery Confirmation Policy (Delhivery DL-441029)"
+            call_summary = "Customer inquired about order ORD-102 (Hydrating Sunscreen). Aria verified it was delivered 14 days ago via Delhivery."
+            recommended_next_step = "Verify package delivery with household members or building reception."
+        elif detected_order == "ORD-103":
+            status = "RESOLVED"
+            policy_applied = "Order Processing Status Policy"
+            call_summary = "Customer inquired about order ORD-103 (Green Tea Combo). Aria confirmed the order is currently Processing and eligible for cancellation if needed."
+            recommended_next_step = "Wait for dispatch tracking update or request cancellation while in Processing."
+        else:
+            status = "UNRESOLVED"
+            policy_applied = "None"
+            call_summary = "Customer requested tracking for an order, but no matching order ID was identified in the database."
+            recommended_next_step = "Verify your order number on the order confirmation email (e.g. ORD-101, ORD-102, or ORD-103) and try again."
+
+    elif is_product:
         intent = "PRODUCT_INQUIRY"
-    elif any(w in lower_user for w in ["shipping", "cod", "policy", "delivery"]):
+        status = "RESOLVED"
+        policy_applied = "None"
+        if any(w in lower_user for w in ["oil", "acne", "pimple", "pore", "pores"]):
+            call_summary = "Customer asked for recommendations for oily and acne-prone skin. Aria recommended the Green Tea Face Wash + Toner combo (₹850) paired with lightweight Hydrating Sunscreen SPF 50 (₹499)."
+            recommended_next_step = "Use Green Tea Face Wash and Toner morning and night, followed by Hydrating Sunscreen SPF 50 in the daytime."
+        elif any(w in lower_user for w in ["vitamin c", "serum", "brighten", "dark spot", "pigment"]):
+            call_summary = "Customer inquired about Vitamin C Serum. Aria provided pricing (₹699) and benefits for fading pigmentation and boosting collagen."
+            recommended_next_step = "Apply Vitamin C Serum in the morning on clean skin before moisturizer and sunscreen."
+        elif any(w in lower_user for w in ["sunscreen", "spf", "dhoop", "sun"]):
+            call_summary = "Customer asked about Hydrating Sunscreen SPF 50. Aria provided pricing (₹499) and broad-spectrum UVA/UVB no-white-cast protection details."
+            recommended_next_step = "Apply Hydrating Sunscreen SPF 50 generously each morning as the final step in skincare routine."
+        else:
+            call_summary = "Customer inquired about Aura Skincare's organic product catalog and pricing. Aria explained product options and recommended routines."
+            recommended_next_step = "Browse Aura Skincare formulations and choose products matching your skin type."
+
+    elif is_policy:
         intent = "POLICY_INQUIRY"
+        status = "RESOLVED"
+        policy_applied = "Shipping Policy (Free above ₹499; ₹50 below) & COD Policy (Up to ₹2,500)"
+        call_summary = "Customer inquired about Aura Skincare store policies (shipping charges, delivery timelines, or Cash on Delivery). Aria provided accurate policy details."
+        recommended_next_step = "Proceed with order placement; standard shipping takes 3 to 5 business days."
 
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     if gemini_key and gemini_key != "your_gemini_api_key_here" and len(transcript) > 1:
         try:
             prompt = (
-                "Analyze this Aura Skincare customer support transcript and return ONLY a raw JSON object with keys: "
-                "customer_intent (one of ORDER_TRACKING, CANCELLATION_REQUEST, RETURN_REQUEST, POLICY_INQUIRY, PRODUCT_INQUIRY, SKINCARE_ADVICE, OUT_OF_SCOPE), "
-                "order_id (string like 'ORD-101' or null), "
-                "resolution_status (one of RESOLVED, REJECTED_BY_POLICY, UNRESOLVED), "
-                "call_summary (concise 1-2 sentence English summary of the call outcome).\n\n"
+                "You are an AI auditor for Aura Skincare customer support calls.\n"
+                "Analyze the following support transcript and generate a structured post-call summary JSON.\n"
+                "Return ONLY a valid JSON object matching this schema:\n"
+                "{\n"
+                '  "customer_intent": "ORDER_TRACKING | CANCELLATION_REQUEST | RETURN_REQUEST | PRODUCT_INQUIRY | POLICY_INQUIRY | GENERAL_SUPPORT",\n'
+                '  "order_id": "ORD-101 | ORD-102 | ORD-103 | null",\n'
+                '  "resolution_status": "RESOLVED | POLICY_DECLINED | UNRESOLVED",\n'
+                '  "call_summary": "Clear, concise 1-2 sentence summary of customer inquiry and resolution",\n'
+                '  "policy_applied": "Name and rule of Aura Skincare policy applied, or \'None\'",\n'
+                '  "products_discussed": ["list of product names discussed, e.g. Vitamin C Serum (30ml)"],\n'
+                '  "recommended_next_step": "Clear actionable next step for customer",\n'
+                '  "call_metrics": {\n'
+                f'    "total_turns": {len(transcript)},\n'
+                f'    "language_detected": "{lang_detected}"\n'
+                "  }\n"
+                "}\n\n"
                 f"Transcript:\n{full_text}"
             )
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
@@ -935,43 +1083,73 @@ async def build_structured_summary(transcript: list[TranscriptTurn]) -> CallOutc
                     },
                 )
                 if resp.status_code == 200:
-                    raw_json = resp.json()["candidates"][0]["content"]["parts"][0][
-                        "text"
-                    ]
-                    parsed = json.loads(raw_json)
-                    return CallOutcomeJSON(
-                        customer_intent=parsed.get("customer_intent", intent),
-                        order_id=parsed.get("order_id", detected_order),
-                        resolution_status=parsed.get("resolution_status", status),
-                        call_summary=parsed.get("call_summary", ""),
-                    )
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and isinstance(candidates[0], dict):
+                        content = candidates[0].get("content")
+                        if isinstance(content, dict):
+                            parts = content.get("parts", [])
+                            if parts and isinstance(parts[0], dict) and isinstance(parts[0].get("text"), str):
+                                raw_text = parts[0]["text"].strip()
+                                match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", raw_text)
+                                if match:
+                                    raw_text = match.group(1).strip()
+                                parsed = json.loads(raw_text)
+                                if isinstance(parsed, dict):
+                                    parsed_status = parsed.get("resolution_status")
+                                    if parsed_status not in {"RESOLVED", "POLICY_DECLINED", "UNRESOLVED"}:
+                                        parsed_status = status
+
+                                    parsed_intent = parsed.get("customer_intent")
+                                    if parsed_intent not in {
+                                        "ORDER_TRACKING",
+                                        "CANCELLATION_REQUEST",
+                                        "RETURN_REQUEST",
+                                        "PRODUCT_INQUIRY",
+                                        "POLICY_INQUIRY",
+                                        "GENERAL_SUPPORT",
+                                    }:
+                                        parsed_intent = intent
+
+                                    parsed_prods = parsed.get("products_discussed")
+                                    if isinstance(parsed_prods, list):
+                                        valid_prods = [str(p) for p in parsed_prods if p]
+                                    else:
+                                        valid_prods = products_discussed
+                                    valid_prods = list(dict.fromkeys(valid_prods))
+
+                                    cm = parsed.get("call_metrics")
+                                    cm_dict = cm if isinstance(cm, dict) else {}
+                                    lang_val = cm_dict.get("language_detected")
+                                    final_lang = str(lang_val) if lang_val else lang_detected
+
+                                    return CallOutcomeJSON(
+                                        customer_intent=parsed_intent,
+                                        order_id=parsed.get("order_id", detected_order),
+                                        resolution_status=parsed_status,
+                                        call_summary=parsed.get("call_summary", call_summary),
+                                        policy_applied=parsed.get("policy_applied", policy_applied),
+                                        products_discussed=valid_prods,
+                                        recommended_next_step=parsed.get("recommended_next_step", recommended_next_step),
+                                        call_metrics=CallMetrics(
+                                            total_turns=len(transcript),
+                                            language_detected=final_lang,
+                                        ),
+                                    )
         except Exception as e:  # noqa: BLE001
             logger.debug("Gemini structured summary error: %s", e)
 
-    summary_text = "Customer connected with Aria from Aura Skincare support."
-    if intent == "ORDER_TRACKING" and detected_order in LIVE_ORDERS:
-        o = LIVE_ORDERS[detected_order]
-        summary_text = f"Customer inquired about {detected_order} ({o['product']}). Informed that status is '{o['status']}' ({o['notes']})."
-    elif intent == "CANCELLATION_REQUEST" and detected_order in LIVE_ORDERS:
-        o = LIVE_ORDERS[detected_order]
-        if o["status"] == "Cancelled":
-            summary_text = f"Customer requested cancellation for {detected_order} ({o['product']}). Order was Processing and successfully cancelled."
-        else:
-            summary_text = f"Customer requested cancellation for {detected_order}. Politely declined as order status is '{o['status']}' and advised doorstep refusal."
-    elif intent == "RETURN_REQUEST":
-        summary_text = "Customer requested a product return. Agent enforced Aura Skincare's 7-day unopened return policy."
-    elif intent == "PRODUCT_INQUIRY":
-        summary_text = "Customer inquired about Aura Skincare product catalog and pricing. Agent provided accurate product details."
-    elif intent == "SKINCARE_ADVICE":
-        summary_text = "Customer asked for personalized skincare advice and routine recommendations. Agent provided tailored product guidance based on skin type."
-    elif intent == "OUT_OF_SCOPE":
-        summary_text = "Customer made an out-of-scope request unrelated to Aura Skincare. Agent politely redirected to Aura Skincare support topics."
-    elif intent == "POLICY_INQUIRY":
-        summary_text = "Customer asked about Aura Skincare's shipping, COD, and return policies. Agent provided accurate policy details."
-
+    products_discussed = list(dict.fromkeys(products_discussed))
     return CallOutcomeJSON(
         customer_intent=intent,
         order_id=detected_order,
         resolution_status=status,
-        call_summary=summary_text,
+        call_summary=call_summary,
+        policy_applied=policy_applied,
+        products_discussed=products_discussed,
+        recommended_next_step=recommended_next_step,
+        call_metrics=CallMetrics(
+            total_turns=len(transcript),
+            language_detected=lang_detected,
+        ),
     )

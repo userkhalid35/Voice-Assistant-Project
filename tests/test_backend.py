@@ -67,10 +67,12 @@ class TestAriaBackend(unittest.TestCase):
         self.assertIn("cancel_order", data.get("tool_used", ""))
         self.assertIn("cancel", data.get("reply_text", "").lower())
         # Check order status changed in returned orders table
+        orders_list = data.get("orders") or []
         ord_103 = next(
-            (o for o in data.get("orders", []) if o["order_id"] == "ORD-103"), None
+            (o for o in orders_list if isinstance(o, dict) and o.get("order_id") == "ORD-103"), None
         )
         self.assertIsNotNone(ord_103)
+        assert isinstance(ord_103, dict)
         self.assertEqual(ord_103["status"], "Cancelled")
 
     def test_06_order_cancellation_policy_block(self):
@@ -90,9 +92,12 @@ class TestAriaBackend(unittest.TestCase):
             or "cannot" in reply_lower
         )
         # Verify status remained Out for Delivery
+        orders_list = data.get("orders") or []
         ord_101 = next(
-            (o for o in data.get("orders", []) if o["order_id"] == "ORD-101"), None
+            (o for o in orders_list if isinstance(o, dict) and o.get("order_id") == "ORD-101"), None
         )
+        self.assertIsNotNone(ord_101)
+        assert isinstance(ord_101, dict)
         self.assertEqual(ord_101["status"], "Out for Delivery")
 
     def test_07_product_pricing_knowledge(self):
@@ -208,6 +213,50 @@ class TestAriaBackend(unittest.TestCase):
         self.assertEqual(res_sum.status_code, 200)
         outcome = res_sum.json()
         self.assertIn(outcome["customer_intent"], ["SKINCARE_ADVICE", "PRODUCT_INQUIRY"])
+        self.assertIn("policy_applied", outcome)
+        self.assertIn("products_discussed", outcome)
+        self.assertIn("recommended_next_step", outcome)
+        self.assertIn("call_metrics", outcome)
+        self.assertEqual(outcome["call_metrics"]["total_turns"], 2)
+        self.assertEqual(outcome["call_metrics"]["language_detected"], "Hinglish")
+
+    def test_14_upgraded_order_tracking_summary(self):
+        history = [
+            {"role": "user", "text": "Where is my order ORD-101?"},
+            {
+                "role": "assistant",
+                "text": "Your order ORD-101 is Out for Delivery with BlueDart and expected by 6 PM today.",
+            },
+        ]
+        res_sum = self.client.post("/api/summary", json={"transcript": history})
+        self.assertEqual(res_sum.status_code, 200)
+        outcome = res_sum.json()
+        self.assertEqual(outcome["customer_intent"], "ORDER_TRACKING")
+        self.assertEqual(outcome["order_id"], "ORD-101")
+        self.assertEqual(outcome["resolution_status"], "RESOLVED")
+        self.assertIn("BlueDart", outcome["policy_applied"])
+        self.assertIn("Vitamin C Serum (30ml)", outcome["products_discussed"])
+        self.assertIn("6 PM", outcome["recommended_next_step"])
+        self.assertEqual(outcome["call_metrics"]["total_turns"], 2)
+        self.assertEqual(outcome["call_metrics"]["language_detected"], "English")
+
+    def test_15_cancellation_policy_declined_summary(self):
+        history = [
+            {"role": "user", "text": "Please cancel order ORD-101 immediately"},
+            {
+                "role": "assistant",
+                "text": "I'm sorry, order ORD-101 is Out for Delivery and cannot be cancelled. You can refuse delivery at your doorstep.",
+            },
+        ]
+        res_sum = self.client.post("/api/summary", json={"transcript": history})
+        self.assertEqual(res_sum.status_code, 200)
+        outcome = res_sum.json()
+        self.assertEqual(outcome["customer_intent"], "CANCELLATION_REQUEST")
+        self.assertEqual(outcome["order_id"], "ORD-101")
+        self.assertEqual(outcome["resolution_status"], "POLICY_DECLINED")
+        self.assertIn("Cancellation Policy", outcome["policy_applied"])
+        self.assertIn("Refuse delivery", outcome["recommended_next_step"])
+        self.assertEqual(outcome["call_metrics"]["total_turns"], 2)
 
 
 if __name__ == "__main__":

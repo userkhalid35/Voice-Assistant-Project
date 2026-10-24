@@ -503,8 +503,38 @@ async function runTests() {
     console.log("  ✓ Passed: Manual text submission works cleanly and preserves API contract.");
   }
 
+  // TEST 13: Speech-Verified & Noise-Calibrated Barge-In (Echo Grace Period & 1-char noise filter)
+  {
+    console.log("\nTest 13: Anti-noise barge-in filters noise hallucinations and enforces 700ms echo grace period...");
+    const { win } = createEnvironment();
+
+    await win.handleStartListening();
+    const rec = MockSpeechRecognition.instances[0];
+    rec.onresult(createResultEvent([{ transcript: "Where is my order?", isFinal: true }]));
+    await win.handleResumeListening();
+
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Assistant must be in SPEAKING state");
+
+    // Case A: 1-character noise hallucination (e.g. "." or "h") during speech must NOT interrupt
+    rec.onresult(createResultEvent([{ transcript: ".", isFinal: false }]));
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Single-character noise hallucination must not trigger barge-in");
+
+    // Case B: Real speech within the 700ms echo grace period must NOT interrupt (echo prevention)
+    rec.onresult(createResultEvent([{ transcript: "Hello wait", isFinal: false }]));
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Interruption within 700ms grace period must be ignored");
+
+    // Wait until past the 700ms echo grace period
+    await new Promise(r => setTimeout(r, 750));
+
+    // Case C: Real speech (>= 2 chars) after 700ms MUST trigger barge-in
+    rec.onresult(createResultEvent([{ transcript: "Wait, cancel that!", isFinal: false }]));
+    assert.strictEqual(win.getTurnState(), "LISTENING", "Verified speech after 700ms grace period must trigger barge-in");
+    assert.strictEqual(win.getIsAriaSpeaking(), false, "Aria audio playback must be stopped");
+    console.log("  ✓ Passed: Echo grace period and noise filtering successfully verified.");
+  }
+
   console.log("\n==============================================");
-  console.log("ALL 12 BROWSER VOICE LIFECYCLE TESTS PASSED! ✓");
+  console.log("ALL 13 BROWSER VOICE LIFECYCLE TESTS PASSED! ✓");
   console.log("==============================================\n");
 }
 
