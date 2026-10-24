@@ -503,9 +503,9 @@ async function runTests() {
     console.log("  ✓ Passed: Manual text submission works cleanly and preserves API contract.");
   }
 
-  // TEST 13: Speech-Verified & Noise-Calibrated Barge-In (Echo Grace Period & 1-char noise filter)
+  // TEST 13: Speech-Verified & Strict 40% Volume Gate Barge-In
   {
-    console.log("\nTest 13: Anti-noise barge-in filters noise hallucinations and enforces 700ms echo grace period...");
+    console.log("\nTest 13: Anti-noise barge-in enforces strict 40% volume gate, 600ms grace window, and filters <=3 char noise...");
     const { win } = createEnvironment();
 
     await win.handleStartListening();
@@ -515,22 +515,30 @@ async function runTests() {
 
     assert.strictEqual(win.getTurnState(), "SPEAKING", "Assistant must be in SPEAKING state");
 
-    // Case A: 1-character noise hallucination (e.g. "." or "h") during speech must NOT interrupt
+    // Case A: Low mic noise (1%-2%) or short noise hallucination (<= 3 chars e.g. ".", "um") must NOT interrupt
+    win.setMicLevelPercentage(2);
     rec.onresult(createResultEvent([{ transcript: ".", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Single-character noise hallucination must not trigger barge-in");
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "1%-2% noise hallucination must not trigger barge-in");
 
-    // Case B: Real speech within the 700ms echo grace period must NOT interrupt (echo prevention)
+    // Case B: Speech within the 600ms echo grace window must NOT interrupt
+    win.setMicLevelPercentage(50);
     rec.onresult(createResultEvent([{ transcript: "Hello wait", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "SPEAKING", "Interruption within 700ms grace period must be ignored");
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Interruption within 600ms grace window must be ignored");
 
-    // Wait until past the 700ms echo grace period
-    await new Promise(r => setTimeout(r, 750));
+    // Wait until past the 600ms echo grace window
+    await new Promise(r => setTimeout(r, 650));
 
-    // Case C: Real speech (>= 2 chars) after 700ms MUST trigger barge-in
+    // Case C: Ambient noise at 2% mic level after 600ms must still NOT interrupt
+    win.setMicLevelPercentage(2);
     rec.onresult(createResultEvent([{ transcript: "Wait, cancel that!", isFinal: false }]));
-    assert.strictEqual(win.getTurnState(), "LISTENING", "Verified speech after 700ms grace period must trigger barge-in");
+    assert.strictEqual(win.getTurnState(), "SPEAKING", "Speech with low mic level (2%) must be blocked by volume gate");
+
+    // Case D: Real vocal speech (> 3 chars) with mic level >= 40% MUST trigger barge-in
+    win.setMicLevelPercentage(45);
+    rec.onresult(createResultEvent([{ transcript: "Wait, cancel that!", isFinal: false }]));
+    assert.strictEqual(win.getTurnState(), "LISTENING", "Verified vocal speech >= 40% after 600ms grace window must trigger barge-in");
     assert.strictEqual(win.getIsAriaSpeaking(), false, "Aria audio playback must be stopped");
-    console.log("  ✓ Passed: Echo grace period and noise filtering successfully verified.");
+    console.log("  ✓ Passed: Strict 40% volume gate, 600ms grace window, and noise filtering verified.");
   }
 
   console.log("\n==============================================");
